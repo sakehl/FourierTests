@@ -1,0 +1,75 @@
+cabal-version: 1.12
+name: TestSeq
+version: 0.1.0.0
+license: BSD3
+license-file: LICENSE
+copyright: 2019 Author name here
+maintainer: example@example.com
+author: Author name here
+homepage: https://github.com/githubuser/TestSeq#readme
+bug-reports: https://github.com/githubuser/TestSeq/issues
+description:
+    Please see the README on GitHub at <https://github.com/githubuser/TestSeq#readme>
+build-type: Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+source-repository head
+    type: git
+    location: https://github.com/githubuser/TestSeq
+
+library
+    exposed-modules:
+        Lib
+        FourierTest
+        FFT
+    c-sources:
+        c++/multi.cpp
+    hs-source-dirs: src
+    other-modules:
+        Paths_TestSeq
+    default-language: Haskell2010
+    extra-libraries:
+        pthread
+    build-depends:
+        base >=4.7 && <5,
+        accelerate -any,
+        accelerate-llvm -any,
+        accelerate-llvm-native -any,
+        llvm-hs -any,
+        llvm-hs-pure -any,
+        carray -any,
+        fft -any,
+        accelerate-fft,
+        criterion,
+        deepseq,
+        lens
+
+executable TestSeq-exe
+    main-is: Main.hs
+    hs-source-dirs: app
+    other-modules:
+        Paths_TestSeq
+    default-language: Haskell2010
+    ghc-options: -threaded -rtsopts -with-rtsopts=-N -O
+    build-depends:
+        TestSeq -any,
+        base >=4.7 && <5,
+        accelerate -any,
+        accelerate-llvm -any,
+        accelerate-llvm-native -any,
+        llvm-hs -any,
+        llvm-hs-pure -any
+
+test-suite TestSeq-test
+    type: exitcode-stdio-1.0
+    main-is: Spec.hs
+    hs-source-dirs: test
+    other-modules:
+        Paths_TestSeq
+    default-language: Haskell2010
+    ghc-options: -threaded -rtsopts -with-rtsopts=-N
+    build-depends:
+        TestSeq -any,
+        base >=4.7 && <5
