@@ -7,13 +7,13 @@ allow-newer: true
 
 # User packages to be built
 packages:
-- .
-- ../../Accelerate
-- ../../Accelerate-fft
-- ../../accelerate-llvm/accelerate-llvm
-- ../../accelerate-llvm/accelerate-llvm-native
-- ../../llvm-hs/llvm-hs
-- ../../llvm-hs/llvm-hs-pure
+#- .
+#- ../../Accelerate
+#- ../../Accelerate-fft
+#- ../../accelerate-llvm/accelerate-llvm
+#- ../../accelerate-llvm/accelerate-llvm-native
+#- ../../llvm-hs/llvm-hs
+#- ../../llvm-hs/llvm-hs-pure
 
 
 # Dependency packages to be pulled from upstream that are not in the resolver
