@@ -67,6 +67,8 @@ flags:
   accelerate-fft:
     llvm-ptx: false
     llvm-cpu: false
+  TestSeq:
+    llvm-ptx: false
 #  accelerate-llvm-native:
 #    unsafe-checks: true
 #    internal-checks: true

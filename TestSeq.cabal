@@ -15,9 +15,13 @@ extra-source-files:
     README.md
     ChangeLog.md
 
+flag llvm-ptx
+  Description:          Use the GPU backend (llvm-ptx)
+  Default:              False
+
 source-repository head
     type: git
-    location: https://github.com/githubuser/TestSeq
+    location: https://github.com/sakehl/TestSeq
 
 library
     exposed-modules:
@@ -46,6 +50,11 @@ library
         deepseq,
         lens
 
+if flag(llvm-ptx)
+    cpp-options:        -DACCELERATE_LLVM_PTX_BACKEND
+    build-depends:
+      accelerate-llvm-ptx
+
 executable TestSeq-exe
     main-is: Main.hs
     hs-source-dirs: app
@@ -61,6 +70,11 @@ executable TestSeq-exe
         accelerate-llvm-native -any,
         llvm-hs -any,
         llvm-hs-pure -any
+
+if flag(llvm-ptx)
+    cpp-options:        -DACCELERATE_LLVM_PTX_BACKEND
+    build-depends:
+      accelerate-llvm-ptx
 
 test-suite TestSeq-test
     type: exitcode-stdio-1.0
