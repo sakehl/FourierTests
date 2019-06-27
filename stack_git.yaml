@@ -19,7 +19,7 @@ packages:
 # Dependency packages to be pulled from upstream that are not in the resolver
 extra-deps:
 - git:    https://github.com/sakehl/accelerate.git
-  commit: c57229710f4796c58526e1a5dc71b1431caa7f81
+  commit: 7ba4857f6f322588bc2e446ecdfd5f8c482ecdff
 
 - git:    https://github.com/sakehl/accelerate-llvm.git
   commit: 34db99d1bdab96027d0f71a931212944ea1a4018
