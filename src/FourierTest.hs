@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP                 #-}
 {-# LANGUAGE BangPatterns        #-}
 {-# LANGUAGE GADTs               #-}
 {-# LANGUAGE PatternGuards       #-}
@@ -7,16 +8,21 @@
 {-# LANGUAGE TypeOperators       #-}
 {-# language FlexibleContexts    #-}
 {-# language ViewPatterns        #-}
+{-# language RankNTypes        #-}
+
 
 module FourierTest where
 
 import qualified Prelude as P
 import Prelude as P (fromIntegral, fromInteger, fromRational, String, return, (>>=), (>>), IO, Maybe(..), maybe, (=<<))
-import Data.Array.Accelerate                              as A hiding (fromInteger, fromRational, fromIntegral)
-import qualified Data.Array.Accelerate                    as A (fromInteger, fromRational, fromIntegral)
+import Data.Array.Accelerate                                        as A hiding (fromInteger, fromRational, fromIntegral)
+import qualified Data.Array.Accelerate                              as A (fromInteger, fromRational, fromIntegral)
 
-import Data.Array.Accelerate.LLVM.Native                  as CPU
-import Data.Array.Accelerate.Interpreter                  as I
+import Data.Array.Accelerate.LLVM.Native                            as CPU
+import Data.Array.Accelerate.Interpreter                            as I
+#ifdef ACCELERATE_LLVM_PTX_BACKEND
+import qualified Data.Array.Accelerate.Math.FFT.LLVM.PTX            as PTX
+#endif
 
 import Debug.Trace
 import Data.Array.Accelerate.Array.Sugar                            as S
@@ -106,25 +112,25 @@ fourierTransformNor xss = result
             initial = lift (unit 0, m)
             in asnd $ awhile condition newf initial
 
-myenv :: Bool -> (Acc (Matrix (Complex Double)) -> Acc (Matrix (Complex Double)))
+myenv :: Bool -> (forall a b. (Arrays a, Arrays b) => (Acc a -> Acc b) -> a -> b)
+      -> (Acc (Matrix (Complex Double)) -> Acc (Matrix (Complex Double)))
       -> IO (Matrix (Complex Double), Matrix (Complex Double), Matrix (Complex Double), Matrix (Complex Double), Matrix (Complex Double)
             , Matrix (Complex Double) -> Matrix (Complex Double))
-myenv reg f = do
+myenv reg run1_ f = do
     let inp1 = inputN 1
         inp10 = inputN 10
         inp100 = inputN 100
         inp1000 = inputN 1000
         inp10000 = inputN 10000
-        runner = CPU.run1 f
+        runner = run1_ f
     
     P.putStrLn "Evaluating input"
     evaluate (rnf inp1)
     evaluate (rnf inp10)
     evaluate (rnf inp100)
-    clearReg
     P.putStrLn "Compiling function"
-    if reg then do P.putStrLn "Compiling regular"; setReg;
-           else do P.putStrLn "Compiling irregular"; clearReg;
+    if reg then do P.putStrLn "Compiling regular"; clearforceIrreg;
+           else do P.putStrLn "Compiling irregular"; setforceIrreg;
     evaluate runner
     P.putStrLn "Done with setup"
     return (inp1, inp10, inp100, inp1000, inp10000, runner)
@@ -138,11 +144,23 @@ tester = do
                 , bench "1000" $ nf runner inp1000
                 , bench "10000" $ nf runner inp10000
                 ]
-        benches name reg f = env (myenv reg f) (benches' name)
-    defaultMain [bgroup "main" [
-          benches "Regular"   True  fourierTransformSeq
-        , benches "Irregular" False fourierTransformSeq
-        , benches "Normal"    False fourierTransformNor
-        , benches "Foreign"   False fourierTransformFor
+        cpubenches name reg f = env (myenv reg CPU.run1 f) (benches' name)
+#ifdef ACCELERATE_LLVM_PTX_BACKEND
+        gpubenches name reg f = env (myenv reg PTX.run1 f) (benches' name)
+#endif
+    defaultMain [bgroup "CPU" [
+          cpubenches "Regular"   True  fourierTransformSeq
+        , cpubenches "Irregular" False fourierTransformSeq
+        , cpubenches "Normal"    False fourierTransformNor
+        , cpubenches "Foreign"   False fourierTransformFor
         ]
+#ifdef ACCELERATE_LLVM_PTX_BACKEND
+        ,
+        bgroup "GPU" [
+          gpubenches "Regular"   True  fourierTransformSeq
+        , gpubenches "Irregular" False fourierTransformSeq
+        , gpubenches "Normal"    False fourierTransformNor
+        , gpubenches "Foreign"   False fourierTransformFor
+        ]
+#endif
         ]
