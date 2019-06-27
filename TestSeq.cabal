@@ -50,10 +50,10 @@ library
         deepseq,
         lens
 
-if flag(llvm-ptx)
-    cpp-options:        -DACCELERATE_LLVM_PTX_BACKEND
-    build-depends:
-      accelerate-llvm-ptx
+    if flag(llvm-ptx)
+        cpp-options:        -DACCELERATE_LLVM_PTX_BACKEND
+        build-depends:
+            accelerate-llvm-ptx
 
 executable TestSeq-exe
     main-is: Main.hs
@@ -71,10 +71,10 @@ executable TestSeq-exe
         llvm-hs -any,
         llvm-hs-pure -any
 
-if flag(llvm-ptx)
-    cpp-options:        -DACCELERATE_LLVM_PTX_BACKEND
-    build-depends:
-      accelerate-llvm-ptx
+    if flag(llvm-ptx)
+        cpp-options:        -DACCELERATE_LLVM_PTX_BACKEND
+        build-depends:
+            accelerate-llvm-ptx
 
 test-suite TestSeq-test
     type: exitcode-stdio-1.0
