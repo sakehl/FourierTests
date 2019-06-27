@@ -160,7 +160,7 @@ tester = do
           gpubenches "Regular"   True  fourierTransformSeq
         , gpubenches "Irregular" False fourierTransformSeq
         , gpubenches "Normal"    False fourierTransformNor
-        , gpubenches "Foreign"   False fourierTransformFor
+        --, gpubenches "Foreign"   False fourierTransformFor
         ]
 #endif
         ]
