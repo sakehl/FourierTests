@@ -21,7 +21,7 @@ import qualified Data.Array.Accelerate                              as A (fromIn
 import Data.Array.Accelerate.LLVM.Native                            as CPU
 import Data.Array.Accelerate.Interpreter                            as I
 #ifdef ACCELERATE_LLVM_PTX_BACKEND
-import qualified Data.Array.Accelerate.Math.FFT.LLVM.PTX            as PTX
+import qualified Data.Array.Accelerate.LLVM.PTX                     as GPU
 #endif
 
 import Debug.Trace
@@ -146,7 +146,7 @@ tester = do
                 ]
         cpubenches name reg f = env (myenv reg CPU.run1 f) (benches' name)
 #ifdef ACCELERATE_LLVM_PTX_BACKEND
-        gpubenches name reg f = env (myenv reg PTX.run1 f) (benches' name)
+        gpubenches name reg f = env (myenv reg GPU.run1 f) (benches' name)
 #endif
     defaultMain [bgroup "CPU" [
           cpubenches "Regular"   True  fourierTransformSeq
