@@ -63,17 +63,18 @@ import Control.Exception
 
 import FFT
 
+type MatrixVec e = Array DIM3 e
 
-inputN :: Int -> Matrix (Complex Double)
-inputN n = fromList (Z :. n :. 16) [ (P.sin x :+ P.cos x) | x <- [0..] ]
+inputN :: Int -> MatrixVec (Complex Double)
+inputN n = fromList (Z :. n :. 32 :. 32) [ (P.sin x :+ P.cos x) | x <- [0..] ]
 
-fourierTransformSeq :: Acc (Matrix (Complex Double)) -> Acc (Matrix (Complex Double))
+fourierTransformSeq :: Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double))
 fourierTransformSeq = collect . tabulate . mapSeq (ditSplitRadixLoop Forward) . toSeqOuter
 
-fourierTransformFor :: Acc (Matrix (Complex Double)) -> Acc (Matrix (Complex Double))
-fourierTransformFor = collect . tabulate . mapSeq (myfft1DFor Forward) . toSeqOuter
+fourierTransformFor :: Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double))
+fourierTransformFor = collect . tabulate . mapSeq (myfft2DFor Forward) . toSeqOuter
 
-fourierTransformNor :: Acc (Matrix (Complex Double)) -> Acc (Matrix (Complex Double))
+fourierTransformNor :: Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double))
 fourierTransformNor xss = result
     where
         n = indexHead . indexTrans . A.shape $ xss
@@ -83,18 +84,18 @@ fourierTransformNor xss = result
         
         result = afor n step init
 
-        init :: Acc (Matrix (Complex Double))
+        init :: Acc (MatrixVec (Complex Double))
         init = fill initsh (constant 0)
 
-        step :: Exp Int -> Acc (Matrix (Complex Double)) -> Acc (Matrix (Complex Double))
+        step :: Exp Int -> Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double))
         step n a = 
-            let slix = lift (Z:.n:.All)
+            let slix = lift (Z:.n:.All:.All)
                 theslice = slice xss slix
 
                 transform = ditSplitRadixLoop Forward theslice
                 reshaped = reshape onesh transform
 
-                res = concatOn _2 a reshaped
+                res = concatOn _3 a reshaped
             in res
 
 
@@ -113,9 +114,9 @@ fourierTransformNor xss = result
             in asnd $ awhile condition newf initial
 
 myenv :: Bool -> (forall a b. (Arrays a, Arrays b) => (Acc a -> Acc b) -> a -> b)
-      -> (Acc (Matrix (Complex Double)) -> Acc (Matrix (Complex Double)))
-      -> IO (Matrix (Complex Double), Matrix (Complex Double), Matrix (Complex Double), Matrix (Complex Double), Matrix (Complex Double)
-            , Matrix (Complex Double) -> Matrix (Complex Double))
+      -> (Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double)))
+      -> IO (MatrixVec (Complex Double), MatrixVec (Complex Double), MatrixVec (Complex Double), MatrixVec (Complex Double), MatrixVec (Complex Double)
+            , MatrixVec (Complex Double) -> MatrixVec (Complex Double))
 myenv reg run1_ f = do
     let inp1 = inputN 1
         inp10 = inputN 10
