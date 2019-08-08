@@ -76,22 +76,10 @@ input :: Matrix (Complex Double)
 input = fromList (Z :. 32 :. 32) [ (P.sin x :+ P.cos x) | x <- [0..] ]
 
 gpuTest :: Int -> MatrixVec (Complex Double)
-gpuTest n = GPU.run1 (collect . tabulate . mapSeq (fft2DForGPU Forward) . toSeqOuter) (inputN n)
+gpuTest n = GPU.run1 (collect . tabulate . mapSeq (PTX.fft2DForGPU Forward) . toSeqOuter) (inputN n)
 
 gpuTest2 ::Matrix (Complex Double)
-gpuTest2 = GPU.run1 (fft2DForGPU Forward) input
-
-gpuTest3 :: Int -> MatrixVec (Complex Double)
-gpuTest3 n = GPU.run1 (fft2DVecW Forward) (inputN n)
-
-gpuTest4 :: Int -> MatrixVec (Complex Double)
-gpuTest4 n = GPU.run1 ( fft3DForGPU Forward) (inputN n)
-
-gpuTest5 ::Matrix (Complex Double)
-gpuTest5 = GPU.run1 (fft2DW Forward) input
-
-gpuTest6 ::Matrix (Complex Double)
-gpuTest6 = GPU.run1 (FFT.fft2D' Forward (Z:. 3 :. 2) ) input
+gpuTest2 = GPU.run1 (PTX.fft2DForGPU Forward) input
 
 gpuTest7 ::Matrix (Complex Double)
 gpuTest7 = GPU.run1 (PTX.fft2DW Forward) input
@@ -101,6 +89,9 @@ fourierTransformSeq = collect . tabulate . mapSeq (ditSplitRadixLoop Forward) . 
 
 fourierTransformFor :: Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double))
 fourierTransformFor = collect . tabulate . mapSeq (myfft2DFor Forward) . toSeqOuter
+
+fourierTransformForGPU :: Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double))
+fourierTransformForGPU = collect . tabulate . mapSeq (PTX.fft2DForGPU Forward) . toSeqOuter
 
 fourierTransformNor :: Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double))
 fourierTransformNor xss = result
@@ -183,8 +174,12 @@ myenv2 :: Bool -> Int
 myenv2 reg a run1_ fun = do
     let inpa = inputN a
         runner = run1_ fun
-        runinp = run1_ $ map (+0) 
     
+    
+    P.putStrLn "Compiling function"
+    if reg then do P.putStrLn "Compiling regular"; clearforceIrreg;
+           else do P.putStrLn "Compiling irregular"; setforceIrreg;
+    evaluate runner
     P.putStrLn "Evaluating input"
     -- evaluate (rnf inp1)
     -- evaluate (rnf inp10)
@@ -192,11 +187,7 @@ myenv2 reg a run1_ fun = do
     -- evaluate (rnf inp1000)
     -- evaluate (rnf inp10000)
     -- evaluate (rnf inp100000)
-    evaluate (runinp inpa)
-    P.putStrLn "Compiling function"
-    if reg then do P.putStrLn "Compiling regular"; clearforceIrreg;
-           else do P.putStrLn "Compiling irregular"; setforceIrreg;
-    evaluate runner
+    evaluate (runner inpa)
     P.putStrLn "Done with setup"
     return (inpa, runner)
 
@@ -218,7 +209,7 @@ tester = do
             in bgroup name $ P.map bench1 xs
         
         cpunums = [1,100,1000,2000,5000,10000]
-        gpunums = [1,1000,10000,20000,50000,100000]
+        gpunums = [1,1000,2000,5000,10000,20000]
         -- cpubenches name reg f = env (myenv reg cpunums CPU.run1 f) (benches' name cpunums)
         cpubenches name reg f = benches'' CPU.run1 cpunums name reg f
 #ifdef ACCELERATE_LLVM_PTX_BACKEND
@@ -229,7 +220,7 @@ tester = do
           cpubenches "Regular"   True  fourierTransformSeq
         , cpubenches "Irregular" False fourierTransformSeq
         , cpubenches "Normal"    False fourierTransformNor
-        , cpubenches "Foreign"   False fourierTransformFor
+        , cpubenches "Foreign"   True fourierTransformFor
         ]
 #ifdef ACCELERATE_LLVM_PTX_BACKEND
         ,
@@ -237,6 +228,7 @@ tester = do
           gpubenches "Regular"   True  fourierTransformSeq
         , gpubenches "Irregular" False fourierTransformSeq
         , gpubenches "Normal"    False fourierTransformNor
+        , gpubenches "Foreign"   True fourierTransformForGPU
         --, gpubenches "Foreign"   False fourierTransformFor
         ]
 #endif

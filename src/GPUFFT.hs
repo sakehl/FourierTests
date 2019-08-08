@@ -91,7 +91,7 @@ fft2DW mode = foreignAcc (PTX.fft2D mode) $ A.map (\_ -> 0) {-Bollocks implement
 fft2DVec :: IsFloating e
       => Mode
       -> ForeignAcc (Array DIM3 (Complex e) -> (Array DIM3 (Complex e)))
-fft2DVec mode = ForeignAcc "fft2DVec" $ liftAtoC (cuFFT mode)
+fft2DVec mode = ForeignAcc "fft2DVec" $ liftAtoC (cuFFTmany mode)
 
 fft2DVecW :: (Elt e, IsFloating e, A.RealFloat e) => Mode -> Acc (Array DIM3 (Complex e)) -> Acc (Array DIM3 (Complex e))
 fft2DVecW mode = foreignAcc (fft2DVec mode) $ A.map (\_ -> -89978978.4e0100) {-Bollocks implementation, for checking-}
@@ -148,8 +148,8 @@ cuFFT = cuFFT' plan
 cuFFTmany :: forall sh e. (Shape sh, IsFloating e)
       => Mode
       -> Stream
-      -> Array (sh:.Int) e
-      -> LLVM PTX (Array (sh:.Int) e)
+      -> Array (sh:.Int:.Int) e
+      -> LLVM PTX (Array (sh:.Int:.Int) e)
 cuFFTmany = cuFFT' manyplan
 
 -- | Convert an unzipped Accelerate array of complex numbers into a (new) packed

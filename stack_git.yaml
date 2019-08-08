@@ -32,7 +32,7 @@ extra-deps:
     - accelerate-llvm-ptx 
 
 - git:    https://github.com/sakehl/accelerate-fft.git
-  commit: ff02cafe0f619aaaad893bebf2213de74590fd90
+  commit: 9f3b4a0852cc52abc73d1f78fe4acab85b7a052e
 # - accelerate-fft-1.1.0.0
 
 - git: https://github.com/sakehl/llvm-hs.git

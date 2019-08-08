@@ -75,11 +75,11 @@ packages:
     git: https://github.com/sakehl/accelerate-fft.git
     pantry-tree:
       size: 2221
-      sha256: 43c52aeb2eb2109510e54bb106d599b6a03db498e285eabe991d9819e1cefbc7
-    commit: ff02cafe0f619aaaad893bebf2213de74590fd90
+      sha256: 4af68e3dcfbb89cf3b3c8bde40fa27ab2fa2a268f15697beaa1d9401103d9a8d
+    commit: 9f3b4a0852cc52abc73d1f78fe4acab85b7a052e
   original:
     git: https://github.com/sakehl/accelerate-fft.git
-    commit: ff02cafe0f619aaaad893bebf2213de74590fd90
+    commit: 9f3b4a0852cc52abc73d1f78fe4acab85b7a052e
 - completed:
     subdir: llvm-hs
     cabal-file:
