@@ -14,6 +14,10 @@ build-type: Simple
 extra-source-files:
     README.md
     ChangeLog.md
+    cubits/twine_f32.ptx
+    cubits/twine_f64.ptx
+    cubits/twine_f32.cu
+    cubits/twine_f64.cu
 
 flag llvm-ptx
   Description:          Use the GPU backend (llvm-ptx)
@@ -28,6 +32,7 @@ library
         Lib
         FourierTest
         FFT
+        FFTAdhoc
     c-sources:
         c++/multi.cpp
     hs-source-dirs: src
@@ -48,12 +53,19 @@ library
         accelerate-fft,
         criterion,
         deepseq,
-        lens
+        lens,
+        lens-accelerate
 
     if flag(llvm-ptx)
         cpp-options:        -DACCELERATE_LLVM_PTX_BACKEND
         build-depends:
-            accelerate-llvm-ptx
+            accelerate-llvm-ptx,
+            cuda,
+            cufft,
+            bytestring,
+            file-embed
+        exposed-modules:
+            GPUFFT
 
 executable TestSeq-exe
     main-is: Main.hs

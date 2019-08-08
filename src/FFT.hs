@@ -6,6 +6,8 @@
 {-# LANGUAGE TemplateHaskell     #-}
 {-# LANGUAGE TypeFamilies        #-}
 {-# LANGUAGE TypeOperators       #-}
+{-# LANGUAGE ViewPatterns       #-}
+{-# LANGUAGE AllowAmbiguousTypes       #-}
 
 module FFT where
 
@@ -17,13 +19,14 @@ import qualified Data.Array.Accelerate                              as A (fromIn
 import Data.Array.Accelerate.Data.Complex                           as A
 import Data.Array.Accelerate.Math.DFT.Centre                        as A
 import Data.Array.Accelerate.Math.FFT                               as A 
-import Data.Array.Accelerate.Math.FFT.Type                          as A
+-- import Data.Array.Accelerate.Math.FFT.Type                          as A
+-- import Data.Array.Accelerate.Math.FFT.LLVM.PTX                      as GPU
 --import Data.Array.Accelerate.Math.FFT.LLVM.Native.Ix
 --import Data.Array.Accelerate.Math.FFT.LLVM.Native.Base
 
 import Data.Array.Accelerate.LLVM.Native                            as CPU
 import Data.Array.Accelerate.Array.Sugar                            as S hiding (shape)
-import Data.Array.Accelerate.LLVM.Native.Foreign
+import Data.Array.Accelerate.LLVM.Native.Foreign                    as CPU
 import Data.Array.Accelerate.Array.Unique                           as A
 import Data.Array.Accelerate.Array.Lifted                           as A
 import Data.Array.Accelerate.Error                                  as A
@@ -42,6 +45,9 @@ import Foreign.ForeignPtr
 
 import Math.FFT                                                     as FFT
 import Math.FFT.Base                                                ( FFTWReal, Sign(..), Flag, measure, destroyInput )
+
+import qualified Foreign.CUDA.FFT                                   as FFT
+
 import Text.Printf
 import Data.Bits
 
@@ -51,24 +57,38 @@ import Debug.Trace
 
 type F = Double
 type Visibility = Complex F
+
+data NumericR a where
+  NumericRfloat32 :: NumericR Float
+  NumericRfloat64 :: NumericR Double
+
+class (RealFloat a, FromIntegral Int a, Elt (Complex a)) => Numeric a where
+  numericR :: NumericR a
+
+instance Numeric Float where
+  numericR = NumericRfloat32
+
+instance Numeric Double where
+  numericR = NumericRfloat64
+
 ----------------------
 -- Fourier transformations
-fft :: Acc (Matrix Visibility) -> Acc (Matrix Visibility)
-fft = shift2D . myfft2D Forward . ishift2D
+-- fft :: Acc (Matrix Visibility) -> Acc (Matrix Visibility)
+-- fft = shift2D . myfft2D Forward . ishift2D
 
-ifft :: Acc (Matrix Visibility) -> Acc (Matrix Visibility)
-ifft = shift2D . myfft2D Inverse . ishift2D
+-- ifft :: Acc (Matrix Visibility) -> Acc (Matrix Visibility)
+-- ifft = shift2D . myfft2D Inverse . ishift2D
 
-myfft2D :: Numeric e => Mode -> Acc (Array DIM2 (Complex e)) -> Acc (Array DIM2 (Complex e))
-myfft2D = fft2D --myfft2DFor
-      
+myfft2D :: FFTElt e => Mode -> Acc (Array DIM2 (Complex e)) -> Acc (Array DIM2 (Complex e))
+myfft2D mode = fft2D' mode (Z :. 32 :. 32) --myfft2DFor
+              
 myfft2DFor :: Numeric e => Mode -> Acc (Array DIM2 (Complex e)) -> Acc (Array DIM2 (Complex e))
 myfft2DFor mode = foreignAcc (fft2DVect mode) $ A.map (\_ -> -89978978.4e0100) {-Bollocks implementation, for checking-}
     where
         fft2DAvoid :: forall e. (Numeric e) 
                     => Mode 
-                    -> ForeignAcc (Array DIM2 (Complex e) -> Array DIM2 (Complex e))
-        fft2DAvoid mode = ForeignAcc (nameOf mode (undefined::DIM2))
+                    -> CPU.ForeignAcc (Array DIM2 (Complex e) -> Array DIM2 (Complex e))
+        fft2DAvoid mode = CPU.ForeignAcc (nameOf mode (undefined::DIM2))
             $ case numericR::NumericR e of
               NumericRfloat32 -> liftIO . liftAtoC go
               NumericRfloat64 -> liftIO . liftAtoC go
@@ -78,8 +98,8 @@ myfft2DFor mode = foreignAcc (fft2DVect mode) $ A.map (\_ -> -89978978.4e0100) {
 
         fft2DRegular :: forall e. (Numeric e) 
                     => Mode 
-                    -> ForeignAcc (Array DIM3 (Complex e) -> Array DIM3 (Complex e))
-        fft2DRegular mode = ForeignAcc (nameOfV mode (undefined::DIM2))
+                    -> CPU.ForeignAcc (Array DIM3 (Complex e) -> Array DIM3 (Complex e))
+        fft2DRegular mode = CPU.ForeignAcc (nameOfV mode (undefined::DIM2))
             $ case numericR::NumericR e of
               NumericRfloat32 -> liftIO . liftAtoC go
               NumericRfloat64 -> liftIO . liftAtoC go
@@ -91,7 +111,7 @@ myfft2DFor mode = foreignAcc (fft2DVect mode) $ A.map (\_ -> -89978978.4e0100) {
                 => Mode -> VectorisedForeign (Array DIM2 (Complex e) -> Array DIM2 (Complex e))
         fft2DVect mode = VectorisedForeign $  f
             where
-                f :: Arrays a' => LiftedType (Array DIM2 (Complex e)) a' -> LiftedType (Array DIM2 (Complex e)) b' -> ForeignAcc (a' -> b')
+                f :: Arrays a' => LiftedType (Array DIM2 (Complex e)) a' -> LiftedType (Array DIM2 (Complex e)) b' -> CPU.ForeignAcc (a' -> b')
                 f AvoidedT AvoidedT = fft2DAvoid mode
                 f RegularT RegularT = fft2DRegular mode
                 f IrregularT IrregularT = error "no irregular stuff"
@@ -101,8 +121,8 @@ myfft1DFor mode = foreignAcc (fft1DVect mode) $ A.map (\_ -> -89978978.4e0100) {
     where
         fft1DAvoid :: forall e. (Numeric e) 
                     => Mode 
-                    -> ForeignAcc (Array DIM1 (Complex e) -> Array DIM1 (Complex e))
-        fft1DAvoid mode = ForeignAcc (nameOf mode (undefined::DIM1))
+                    -> CPU.ForeignAcc (Array DIM1 (Complex e) -> Array DIM1 (Complex e))
+        fft1DAvoid mode = CPU.ForeignAcc (nameOf mode (undefined::DIM1))
             $ case numericR::NumericR e of
               NumericRfloat32 -> liftIO . liftAtoC go
               NumericRfloat64 -> liftIO . liftAtoC go
@@ -112,8 +132,8 @@ myfft1DFor mode = foreignAcc (fft1DVect mode) $ A.map (\_ -> -89978978.4e0100) {
 
         fft1DRegular :: forall e. (Numeric e) 
                     => Mode 
-                    -> ForeignAcc (Array DIM2 (Complex e) -> Array DIM2 (Complex e))
-        fft1DRegular mode = ForeignAcc (nameOfV mode (undefined::DIM1))
+                    -> CPU.ForeignAcc (Array DIM2 (Complex e) -> Array DIM2 (Complex e))
+        fft1DRegular mode = CPU.ForeignAcc (nameOfV mode (undefined::DIM1))
             $ case numericR::NumericR e of
               NumericRfloat32 -> liftIO . liftAtoC go
               NumericRfloat64 -> liftIO . liftAtoC go
@@ -125,13 +145,13 @@ myfft1DFor mode = foreignAcc (fft1DVect mode) $ A.map (\_ -> -89978978.4e0100) {
                 => Mode -> VectorisedForeign (Array DIM1 (Complex e) -> Array DIM1 (Complex e))
         fft1DVect mode = VectorisedForeign $  f
             where
-                f :: Arrays a' => LiftedType (Array DIM1 (Complex e)) a' -> LiftedType (Array DIM1 (Complex e)) b' -> ForeignAcc (a' -> b')
+                f :: Arrays a' => LiftedType (Array DIM1 (Complex e)) a' -> LiftedType (Array DIM1 (Complex e)) b' -> CPU.ForeignAcc (a' -> b')
                 f AvoidedT AvoidedT = fft1DAvoid mode
                 f RegularT RegularT = fft1DRegular mode
                 f IrregularT IrregularT = error "no irregular stuff"
 
-myfft2D32 :: Numeric e => Mode -> Acc (Array DIM2 (Complex e)) -> Acc (Array DIM2 (Complex e))
-myfft2D32 = fft2D
+myfft2D32 :: FFTElt e => Mode -> Acc (Array DIM2 (Complex e)) -> Acc (Array DIM2 (Complex e))
+myfft2D32 = myfft2D
 
 signOf :: Mode -> Sign
 signOf Forward = DFTForward

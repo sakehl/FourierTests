@@ -34,7 +34,7 @@ import Data.Array.Accelerate.Data.Complex                           as A
 import Data.Array.Accelerate.Debug hiding (Mode)
 
 import Data.Array.Accelerate.Math.FFT                   as FFT
-import Data.Array.Accelerate.Math.FFT.Type                          as A
+-- import Data.Array.Accelerate.Math.FFT.Type                          as A
 import Data.Array.Accelerate.Math.DFT.Centre                        as A
 --import Data.Array.Accelerate.Math.FFT.Mode              as FFT
 {-
@@ -62,11 +62,39 @@ import Control.DeepSeq
 import Control.Exception
 
 import FFT
+import GPUFFT
+import FFTAdhoc
+
+import qualified Data.Array.Accelerate.Math.FFT.LLVM.PTX as PTX
 
 type MatrixVec e = Array DIM3 e
 
 inputN :: Int -> MatrixVec (Complex Double)
 inputN n = fromList (Z :. n :. 32 :. 32) [ (P.sin x :+ P.cos x) | x <- [0..] ]
+
+input :: Matrix (Complex Double)
+input = fromList (Z :. 32 :. 32) [ (P.sin x :+ P.cos x) | x <- [0..] ]
+
+gpuTest :: Int -> MatrixVec (Complex Double)
+gpuTest n = GPU.run1 (collect . tabulate . mapSeq (fft2DForGPU Forward) . toSeqOuter) (inputN n)
+
+gpuTest2 ::Matrix (Complex Double)
+gpuTest2 = GPU.run1 (fft2DForGPU Forward) input
+
+gpuTest3 :: Int -> MatrixVec (Complex Double)
+gpuTest3 n = GPU.run1 (fft2DVecW Forward) (inputN n)
+
+gpuTest4 :: Int -> MatrixVec (Complex Double)
+gpuTest4 n = GPU.run1 ( fft3DForGPU Forward) (inputN n)
+
+gpuTest5 ::Matrix (Complex Double)
+gpuTest5 = GPU.run1 (fft2DW Forward) input
+
+gpuTest6 ::Matrix (Complex Double)
+gpuTest6 = GPU.run1 (FFT.fft2D' Forward (Z:. 3 :. 2) ) input
+
+gpuTest7 ::Matrix (Complex Double)
+gpuTest7 = GPU.run1 (PTX.fft2DW Forward) input
 
 fourierTransformSeq :: Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double))
 fourierTransformSeq = collect . tabulate . mapSeq (ditSplitRadixLoop Forward) . toSeqOuter
