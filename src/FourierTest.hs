@@ -141,41 +141,89 @@ fourierTransformNor xss = result
             initial = lift (unit 0, m)
             in asnd $ awhile condition newf initial
 
-myenv :: Bool -> (forall a b. (Arrays a, Arrays b) => (Acc a -> Acc b) -> a -> b)
+myenv :: Bool -> (Int, Int, Int, Int, Int, Int)
+      -> (forall a b. (Arrays a, Arrays b) => (Acc a -> Acc b) -> a -> b)
       -> (Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double)))
-      -> IO (MatrixVec (Complex Double), MatrixVec (Complex Double), MatrixVec (Complex Double), MatrixVec (Complex Double), MatrixVec (Complex Double)
+      -> IO (MatrixVec (Complex Double), MatrixVec (Complex Double), MatrixVec (Complex Double), MatrixVec (Complex Double), MatrixVec (Complex Double), MatrixVec (Complex Double)
             , MatrixVec (Complex Double) -> MatrixVec (Complex Double))
-myenv reg run1_ f = do
-    let inp1 = inputN 1
-        inp10 = inputN 10
-        inp100 = inputN 100
-        inp1000 = inputN 1000
-        inp10000 = inputN 10000
-        runner = run1_ f
+myenv reg (a,b,c,d,e,f) run1_ fun = do
+    let inpa = inputN a
+        inpb = inputN b
+        inpc = inputN c
+        inpd = inputN d
+        inpe = inputN e
+        inpf = inputN f
+        runner = run1_ fun
+        runinp = run1_ $ map (+0) 
     
     P.putStrLn "Evaluating input"
-    evaluate (rnf inp1)
-    evaluate (rnf inp10)
-    evaluate (rnf inp100)
+    -- evaluate (rnf inp1)
+    -- evaluate (rnf inp10)
+    -- evaluate (rnf inp100)
+    -- evaluate (rnf inp1000)
+    -- evaluate (rnf inp10000)
+    -- evaluate (rnf inp100000)
+    evaluate (runinp inpa)
+    evaluate (runinp inpb)
+    evaluate (runinp inpc)
+    evaluate (runinp inpd)
+    evaluate (runinp inpe)
+    evaluate (runinp inpf)
     P.putStrLn "Compiling function"
     if reg then do P.putStrLn "Compiling regular"; clearforceIrreg;
            else do P.putStrLn "Compiling irregular"; setforceIrreg;
     evaluate runner
     P.putStrLn "Done with setup"
-    return (inp1, inp10, inp100, inp1000, inp10000, runner)
+    return (inpa, inpb, inpc, inpd, inpe, inpf, runner)
+
+myenv2 :: Bool -> Int
+       -> (forall a b. (Arrays a, Arrays b) => (Acc a -> Acc b) -> a -> b)
+       -> (Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double)))
+       -> IO (MatrixVec (Complex Double), MatrixVec (Complex Double) -> MatrixVec (Complex Double))
+myenv2 reg a run1_ fun = do
+    let inpa = inputN a
+        runner = run1_ fun
+        runinp = run1_ $ map (+0) 
+    
+    P.putStrLn "Evaluating input"
+    -- evaluate (rnf inp1)
+    -- evaluate (rnf inp10)
+    -- evaluate (rnf inp100)
+    -- evaluate (rnf inp1000)
+    -- evaluate (rnf inp10000)
+    -- evaluate (rnf inp100000)
+    evaluate (runinp inpa)
+    P.putStrLn "Compiling function"
+    if reg then do P.putStrLn "Compiling regular"; clearforceIrreg;
+           else do P.putStrLn "Compiling irregular"; setforceIrreg;
+    evaluate runner
+    P.putStrLn "Done with setup"
+    return (inpa, runner)
 
 tester :: IO ()
 tester = do
-    let benches' name ~(inp1, inp10, inp100, inp1000, inp10000, runner) = bgroup name [
-                  bench "1"  $ nf runner inp1
-                , bench "10" $ nf runner inp10
-                , bench "100" $ nf runner inp100
-                , bench "1000" $ nf runner inp1000
-                , bench "10000" $ nf runner inp10000
-                ]
-        cpubenches name reg f = env (myenv reg CPU.run1 f) (benches' name)
+    let 
+        -- benches' name (a,b,c,d,e,f) ~(inpa, inpb, inpc, inpd, inpe, inpf, runner) = bgroup name [
+        --           bench (P.show a) $ nf runner inpa
+        --         , bench (P.show b) $ nf runner inpb
+        --         , bench (P.show c) $ nf runner inpc
+        --         , bench (P.show d) $ nf runner inpd
+        --         , bench (P.show e) $ nf runner inpe
+        --         , bench (P.show f) $ nf runner inpf
+        --         ]
+        benches'' :: (forall a b. (Arrays a, Arrays b) => (Acc a -> Acc b) -> a -> b) -> [Int] -> String -> Bool -> (Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double))) -> Benchmark
+        benches'' run1 xs name reg f =
+            let 
+                bench1 x = env (myenv2 reg x run1 f) $ \(~(inpx, runner)) -> bench (P.show x) $ nf runner inpx
+            in bgroup name $ P.map bench1 xs
+        
+        cpunums = [1,100,1000,2000,5000,10000]
+        gpunums = [1,1000,10000,20000,50000,100000]
+        -- cpubenches name reg f = env (myenv reg cpunums CPU.run1 f) (benches' name cpunums)
+        cpubenches name reg f = benches'' CPU.run1 cpunums name reg f
 #ifdef ACCELERATE_LLVM_PTX_BACKEND
-        gpubenches name reg f = env (myenv reg GPU.run1 f) (benches' name)
+        -- gpubenches name reg f = env (myenv reg gpunums GPU.run1 f) (benches' name gpunums)
+        gpubenches name reg f = benches'' GPU.run1 gpunums name reg f
 #endif
     defaultMain [bgroup "CPU" [
           cpubenches "Regular"   True  fourierTransformSeq
