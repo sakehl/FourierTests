@@ -29,11 +29,11 @@ packages:
     pantry-tree:
       size: 4478
       sha256: 2255debe35b74907122bb6adb01aba5ff87bf836b2a4dada723e8a9312b32f3e
-    commit: 34db99d1bdab96027d0f71a931212944ea1a4018
+    commit: cd7f0d451fbfc85ab8782e6d229cf92fa6aa3faa
   original:
     subdir: accelerate-llvm
     git: https://github.com/sakehl/accelerate-llvm.git
-    commit: 34db99d1bdab96027d0f71a931212944ea1a4018
+    commit: cd7f0d451fbfc85ab8782e6d229cf92fa6aa3faa
 - completed:
     subdir: accelerate-llvm-native
     cabal-file:
@@ -45,11 +45,27 @@ packages:
     pantry-tree:
       size: 2494
       sha256: 5c8231f8a8ba0c483e1d2db81695ecf3202e502cf32e90ab97d7bfaddd089aee
-    commit: 34db99d1bdab96027d0f71a931212944ea1a4018
+    commit: cd7f0d451fbfc85ab8782e6d229cf92fa6aa3faa
   original:
     subdir: accelerate-llvm-native
     git: https://github.com/sakehl/accelerate-llvm.git
-    commit: 34db99d1bdab96027d0f71a931212944ea1a4018
+    commit: cd7f0d451fbfc85ab8782e6d229cf92fa6aa3faa
+- completed:
+    subdir: accelerate-llvm-ptx
+    cabal-file:
+      size: 4724
+      sha256: 44ceb5f1a473d38bd6eca40ff2b5cd09bc743afe2920b363061bde755ec1592e
+    name: accelerate-llvm-ptx
+    version: 2.0.0.0
+    git: https://github.com/sakehl/accelerate-llvm.git
+    pantry-tree:
+      size: 3206
+      sha256: d358b19e8eb08e11eb30015d85168e5d2172d83c018687d1eb9aea04e8d1037c
+    commit: cd7f0d451fbfc85ab8782e6d229cf92fa6aa3faa
+  original:
+    subdir: accelerate-llvm-ptx
+    git: https://github.com/sakehl/accelerate-llvm.git
+    commit: cd7f0d451fbfc85ab8782e6d229cf92fa6aa3faa
 - completed:
     cabal-file:
       size: 3730
