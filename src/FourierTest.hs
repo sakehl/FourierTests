@@ -56,7 +56,7 @@ import Math.FFT                                                     as FFT
 import Math.FFT.Base                                                as FFT
 import Data.Bits
 
-import Control.Lens --(lens, (_2))
+import Control.Lens hiding (use)
 import Criterion.Main
 import Control.DeepSeq
 import Control.Exception
@@ -71,6 +71,12 @@ type MatrixVec e = Array DIM3 e
 
 inputN :: Int -> MatrixVec (Complex Double)
 inputN n = fromList (Z :. n :. 32 :. 32) [ (P.sin x :+ P.cos x) | x <- [0..] ]
+
+inputNAcc :: Acc (Scalar Int) -> Acc (MatrixVec (Complex Double))
+inputNAcc (the -> n) = compute $ generate (index3 n 32 32) (\sh -> let x = shapeSize' sh in  lift $ x/n' :+ n'/x )
+    where
+        shapeSize' (unlift -> Z :. z :. y :. x) = A.fromIntegral $ (z+1) * (y+1) * (x+1)
+        n' = A.fromIntegral n
 
 input :: Matrix (Complex Double)
 input = fromList (Z :. 32 :. 32) [ (P.sin x :+ P.cos x) | x <- [0..] ]
@@ -170,10 +176,11 @@ myenv reg (a,b,c,d,e,f) run1_ fun = do
 myenv2 :: Bool -> Int
        -> (forall a b. (Arrays a, Arrays b) => (Acc a -> Acc b) -> a -> b)
        -> (Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double)))
-       -> IO (MatrixVec (Complex Double), MatrixVec (Complex Double) -> MatrixVec (Complex Double))
+       -> IO (Scalar Int, Scalar Int -> MatrixVec (Complex Double))
 myenv2 reg a run1_ fun = do
-    let inpa = inputN a
-        runner = run1_ fun
+    let inpa = fromList Z [a]
+        -- inpa = inputN a
+        runner = run1_ (fun . inputNAcc)
     
     
     P.putStrLn "Compiling function"
@@ -191,45 +198,83 @@ myenv2 reg a run1_ fun = do
     P.putStrLn "Done with setup"
     return (inpa, runner)
 
+myenv3 :: Bool -> (Int, Int, Int, Int, Int, Int)
+       -> (forall a b. (Arrays a, Arrays b) => (Acc a -> Acc b) -> a -> b)
+       -> (Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double)))
+       -> IO (Scalar Int, Scalar Int, Scalar Int, Scalar Int, Scalar Int, Scalar Int
+             , Scalar Int -> MatrixVec (Complex Double))
+myenv3 reg (a,b,c,d,e,f) run1_ fun = do
+    let inpa = fromList Z [a]
+        inpb = fromList Z [b]
+        inpc = fromList Z [c]
+        inpd = fromList Z [d]
+        inpe = fromList Z [e]
+        inpf = fromList Z [f]
+        runner = run1_ (fun . inputNAcc)
+    
+    
+    P.putStrLn "Compiling function"
+    if reg then do P.putStrLn "Compiling regular"; clearforceIrreg;
+           else do P.putStrLn "Compiling irregular"; setforceIrreg;
+    evaluate runner
+
+    P.putStrLn "Evaluating input"
+    --Everything goes to a max of C.
+    evaluate (runner inpc)
+    
+    P.putStrLn "Done with setup"
+    return (inpa, inpb, inpc, inpd, inpe, inpf, runner)
+
 tester :: IO ()
 tester = do
     let 
-        -- benches' name (a,b,c,d,e,f) ~(inpa, inpb, inpc, inpd, inpe, inpf, runner) = bgroup name [
-        --           bench (P.show a) $ nf runner inpa
-        --         , bench (P.show b) $ nf runner inpb
-        --         , bench (P.show c) $ nf runner inpc
-        --         , bench (P.show d) $ nf runner inpd
-        --         , bench (P.show e) $ nf runner inpe
-        --         , bench (P.show f) $ nf runner inpf
-        --         ]
+        benches' name (a,b,c,d,e,f) ~(inpa, inpb, inpc, inpd, inpe, inpf, runner) = bgroup name [
+                  bench (P.show a) $ nf runner inpa
+                , bench (P.show b) $ nf runner inpb
+                , bench (P.show c) $ nf runner inpc
+                , bench (P.show d) $ nf runner inpd
+                , bench (P.show e) $ nf runner inpe
+                , bench (P.show f) $ nf runner inpf
+                ]
+        benchesNor' name (a,b,c,d,e,f) ~(inpa, inpb, inpc, inpd, inpe, inpf, runner) = bgroup name [
+                  bench (P.show a) $ nf runner inpa
+                , bench (P.show b) $ nf runner inpb
+                , bench (P.show c) $ nf runner inpc
+                ]
         benches'' :: (forall a b. (Arrays a, Arrays b) => (Acc a -> Acc b) -> a -> b) -> [Int] -> String -> Bool -> (Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double))) -> Benchmark
         benches'' run1 xs name reg f =
             let 
                 bench1 x = env (myenv2 reg x run1 f) $ \(~(inpx, runner)) -> bench (P.show x) $ nf runner inpx
             in bgroup name $ P.map bench1 xs
         
-        cpunums = [1,100,1000,2000,5000,10000]
-        gpunums = [1,1000,2000,5000,10000,20000]
-        -- cpubenches name reg f = env (myenv reg cpunums CPU.run1 f) (benches' name cpunums)
-        cpubenches name reg f = benches'' CPU.run1 cpunums name reg f
+        cpunums1 = [1,100,1000,2000,5000,10000]
+        gpunums1 = [1,100,1000,5000,10000,20000]
+        normbench = [1,100,1000]
+        -- cpunums2 = (1,100,1000,2000,5000,10000)
+        -- gpunums2 = (1,100,1000     ,5000,10000,20000)
+        -- cpubenches name reg f = env (myenv3 reg cpunums2 CPU.run1 f) (benches' name cpunums2)
+        -- cpubenchesNor name reg f = env (myenv3 reg cpunums2 CPU.run1 f) (benchesNor' name cpunums2)
+        cpubenches name reg f = benches'' CPU.run1 cpunums1 name reg f
+        cpubenchesNor name reg f = benches'' CPU.run1 normbench name reg f
 #ifdef ACCELERATE_LLVM_PTX_BACKEND
-        -- gpubenches name reg f = env (myenv reg gpunums GPU.run1 f) (benches' name gpunums)
-        gpubenches name reg f = benches'' GPU.run1 gpunums name reg f
+        -- gpubenches name reg f = env (myenv3 reg gpunums2 GPU.run1 f) (benches' name gpunums2)
+        -- gpubenchesNor name reg f = env (myenv3 reg gpunums2 GPU.run1 f) (benchesNor' name gpunums2)
+        gpubenches name reg f = benches'' GPU.run1 gpunums1 name reg f
+        gpubenchesNor name reg f = benches'' GPU.run1 normbench name reg f
 #endif
     defaultMain [bgroup "CPU" [
           cpubenches "Regular"   True  fourierTransformSeq
         , cpubenches "Irregular" False fourierTransformSeq
-        , cpubenches "Normal"    False fourierTransformNor
         , cpubenches "Foreign"   True fourierTransformFor
+        , cpubenchesNor "Normal"    False fourierTransformNor
         ]
 #ifdef ACCELERATE_LLVM_PTX_BACKEND
         ,
         bgroup "GPU" [
           gpubenches "Regular"   True  fourierTransformSeq
         , gpubenches "Irregular" False fourierTransformSeq
-        , gpubenches "Normal"    False fourierTransformNor
         , gpubenches "Foreign"   True fourierTransformForGPU
-        --, gpubenches "Foreign"   False fourierTransformFor
+        , gpubenchesNor "Normal"    False fourierTransformNor
         ]
 #endif
         ]

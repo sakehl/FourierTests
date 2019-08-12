@@ -15,7 +15,7 @@ packages:
 #- ../../llvm-hs/llvm-hs
 #- ../../llvm-hs/llvm-hs-pure
 #- /mnt/cyclone/spin1/larsvdh/accelerate-llvm/accelerate-llvm-ptx
-# - ../accelerate-llvm/accelerate-llvm-ptx
+#- ../accelerate-llvm/accelerate-llvm-ptx
 - .
 
 
@@ -25,7 +25,7 @@ extra-deps:
   commit: 0a7351b5c1f60c48107cf7a7e4843d9b1566f6a4
 
 - git:    https://github.com/sakehl/accelerate-llvm.git
-  commit: cd7f0d451fbfc85ab8782e6d229cf92fa6aa3faa
+  commit: c05bc357776a2e96022f650b72bf902548b1ceb0
   subdirs:
     - accelerate-llvm
     - accelerate-llvm-native
