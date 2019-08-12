@@ -54,7 +54,8 @@ library
         criterion,
         deepseq,
         lens,
-        lens-accelerate
+        lens-accelerate,
+        time
 
     if flag(llvm-ptx)
         cpp-options:        -DACCELERATE_LLVM_PTX_BACKEND

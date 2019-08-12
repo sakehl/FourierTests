@@ -58,6 +58,8 @@ import Data.Bits
 
 import Control.Lens hiding (use)
 import Criterion.Main
+import Data.Time.Clock.System
+import Data.Time.Clock
 import Control.DeepSeq
 import Control.Exception
 
@@ -138,6 +140,12 @@ fourierTransformNor xss = result
             initial = lift (unit 0, m)
             in asnd $ awhile condition newf initial
 
+time_ :: IO a -> IO String
+time_ a = do t1 <- getSystemTime
+             a
+             t2 <- getSystemTime
+             return $ P.show (diffUTCTime (systemToUTCTime t2) (systemToUTCTime t1) )
+
 myenv :: Bool -> (Int, Int, Int, Int, Int, Int)
       -> (forall a b. (Arrays a, Arrays b) => (Acc a -> Acc b) -> a -> b)
       -> (Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double)))
@@ -169,7 +177,7 @@ myenv reg (a,b,c,d,e,f) run1_ fun = do
     P.putStrLn "Compiling function"
     if reg then do P.putStrLn "Compiling regular"; clearforceIrreg;
            else do P.putStrLn "Compiling irregular"; setforceIrreg;
-    evaluate runner
+    time_ (evaluate runner) >>= (\x -> P.putStrLn ("Compiling took " P.++ x))
     P.putStrLn "Done with setup"
     return (inpa, inpb, inpc, inpd, inpe, inpf, runner)
 
@@ -186,7 +194,7 @@ myenv2 reg a run1_ fun = do
     P.putStrLn "Compiling function"
     if reg then do P.putStrLn "Compiling regular"; clearforceIrreg;
            else do P.putStrLn "Compiling irregular"; setforceIrreg;
-    evaluate runner
+    time_ (evaluate runner) >>= (\x -> P.putStrLn ("Compiling took " P.++ x))
     P.putStrLn "Evaluating input"
     -- evaluate (rnf inp1)
     -- evaluate (rnf inp10)
@@ -216,7 +224,7 @@ myenv3 reg (a,b,c,d,e,f) run1_ fun = do
     P.putStrLn "Compiling function"
     if reg then do P.putStrLn "Compiling regular"; clearforceIrreg;
            else do P.putStrLn "Compiling irregular"; setforceIrreg;
-    evaluate runner
+    time_ (evaluate runner) >>= (\x -> P.putStrLn ("Compiling took " P.++ x))
 
     P.putStrLn "Evaluating input"
     --Everything goes to a max of C.
@@ -248,7 +256,7 @@ tester = do
             in bgroup name $ P.map bench1 xs
         
         cpunums1 = [1,100,1000,2000,5000,10000]
-        gpunums1 = [1,100,1000,5000,10000,20000]
+        gpunums1 = [1,100,1000,     5000,10000,20000]
         normbench = [1,100,1000]
         -- cpunums2 = (1,100,1000,2000,5000,10000)
         -- gpunums2 = (1,100,1000     ,5000,10000,20000)
