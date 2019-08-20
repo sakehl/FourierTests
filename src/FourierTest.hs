@@ -83,23 +83,23 @@ inputNAcc (the -> n) = compute $ generate (index3 n 32 32) (\sh -> let x = shape
 input :: Matrix (Complex Double)
 input = fromList (Z :. 32 :. 32) [ (P.sin x :+ P.cos x) | x <- [0..] ]
 
-gpuTest :: Int -> MatrixVec (Complex Double)
-gpuTest n = GPU.run1 (collect . tabulate . mapSeq (PTX.fft2DForGPU Forward) . toSeqOuter) (inputN n)
+-- gpuTest :: Int -> MatrixVec (Complex Double)
+-- gpuTest n = GPU.run1 (collect . tabulate . mapSeq (PTX.fft2DForGPU Forward) . toSeqOuter) (inputN n)
 
-gpuTest2 ::Matrix (Complex Double)
-gpuTest2 = GPU.run1 (PTX.fft2DForGPU Forward) input
+-- gpuTest2 ::Matrix (Complex Double)
+-- gpuTest2 = GPU.run1 (PTX.fft2DForGPU Forward) input
 
-gpuTest7 ::Matrix (Complex Double)
-gpuTest7 = GPU.run1 (PTX.fft2DW Forward) input
+-- gpuTest7 ::Matrix (Complex Double)
+-- gpuTest7 = GPU.run1 (PTX.fft2DW Forward) input
 
 fourierTransformSeq :: Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double))
 fourierTransformSeq = collect . tabulate . mapSeq (ditSplitRadixLoop Forward) . toSeqOuter
 
 fourierTransformFor :: Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double))
-fourierTransformFor = collect . tabulate . mapSeq (myfft2DFor Forward) . toSeqOuter
+fourierTransformFor = collect . tabulate . mapSeq (fft2DFor Forward) . toSeqOuter
 
 fourierTransformForGPU :: Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double))
-fourierTransformForGPU = collect . tabulate . mapSeq (PTX.fft2DForGPU Forward) . toSeqOuter
+fourierTransformForGPU = collect . tabulate . mapSeq (fft2DFor Forward) . toSeqOuter
 
 fourierTransformNor :: Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double))
 fourierTransformNor xss = result

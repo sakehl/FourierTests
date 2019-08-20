@@ -9,7 +9,7 @@ allow-newer: true
 packages:
 #- .
 #- ../../Accelerate
-#- ../../Accelerate-fft
+# - ../accelerate-fft
 #- ../../accelerate-llvm/accelerate-llvm
 #- ../../accelerate-llvm/accelerate-llvm-native
 #- ../../llvm-hs/llvm-hs
@@ -32,7 +32,7 @@ extra-deps:
     - accelerate-llvm-ptx 
 
 - git:    https://github.com/sakehl/accelerate-fft.git
-  commit: 9f3b4a0852cc52abc73d1f78fe4acab85b7a052e
+  commit: 1e623283e816bc7ac01d0fd5adc4ce3616b25d9d
 # - accelerate-fft-1.1.0.0
 
 - git: https://github.com/sakehl/llvm-hs.git
