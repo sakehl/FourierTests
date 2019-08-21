@@ -22,7 +22,7 @@
 -- package contains other more sophisticated algorithms as well.
 --
 
-module FFTAdhoc ( fft, ditSplitRadixLoop)
+module FFTAdhoc ( fft, ditSplitRadixLoop, FFTAdhoc.fft2D, fft2DV)
   where
 
 import Data.Array.Accelerate                                        hiding ( transpose )
@@ -50,6 +50,30 @@ instance (Slice sh, Elt a, Elt b, Elt b', Slice (sh :. b), Slice (sh :. b'))
   _2 = lens (\s   -> let _  :. b :. _ = unlift s :: Exp sh :. Exp b :. Exp a in b)
             (\s b -> let sh :. _ :. a = unlift s :: Exp sh :. Exp b :. Exp a in lift (sh :. b :. a))
 -}
+
+fft2D :: (Numeric e)
+    => Mode
+    -> Acc (Array DIM2 (Complex e))
+    -> Acc (Array DIM2 (Complex e))
+fft2D mode arr =
+  let
+    scale = fromIntegral (size arr)
+    go    = transpose . ditSplitRadixLoop mode >-> transpose . ditSplitRadixLoop mode
+  in case mode of
+      Inverse -> map (/scale) (go arr)
+      _       -> go arr
+
+fft2DV :: (Numeric e)
+    => Mode
+    -> Acc (Array DIM3 (Complex e))
+    -> Acc (Array DIM3 (Complex e))
+fft2DV mode arr =
+  let
+    scale = fromIntegral (shapeSize . indexTail . indexTrans . shape $ arr)
+    go    = transpose . ditSplitRadixLoop mode >-> transpose . ditSplitRadixLoop mode
+  in case mode of
+      Inverse -> map (/scale) (go arr)
+      _       -> go arr
 
 
 fft :: (Shape sh, Slice sh, Numeric e)

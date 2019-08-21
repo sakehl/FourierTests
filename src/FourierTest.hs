@@ -92,8 +92,38 @@ input = fromList (Z :. 32 :. 32) [ (P.sin x :+ P.cos x) | x <- [0..] ]
 -- gpuTest7 ::Matrix (Complex Double)
 -- gpuTest7 = GPU.run1 (PTX.fft2DW Forward) input
 
+gpuTest :: Int -> Acc (MatrixVec (Complex Double))
+gpuTest n = let
+    n' = unit . lift $ n
+    dat = inputNAcc n'
+    fft1 = fourierTransformSeq dat
+    fft2 = fourierTransformSelfLift dat
+  in zipWith (-) fft1 fft2
+
+gpuTest2 :: Int -> Acc (MatrixVec (Complex Double))
+gpuTest2 n = let
+    n' = unit . lift $ n
+    dat = inputNAcc n'
+    fft1 = fourierTransformForGPU dat
+    fft2 = fourierTransformSelfLift dat
+  in zipWith (-) fft1 fft2
+
+gpuTest3 :: Int -> Acc (MatrixVec (Complex Double))
+gpuTest3 n = let
+    n' = unit . lift $ n
+    dat = inputNAcc n'
+    fft1 = fourierTransformSelfLiftFor dat
+    fft2 = fourierTransformSelfLift dat
+  in zipWith (-) fft1 fft2
+
 fourierTransformSeq :: Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double))
-fourierTransformSeq = collect . tabulate . mapSeq (ditSplitRadixLoop Forward) . toSeqOuter
+fourierTransformSeq = collect . tabulate . mapSeq (FFTAdhoc.fft2D Forward) . toSeqOuter
+
+fourierTransformSelfLift :: Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double))
+fourierTransformSelfLift = FFTAdhoc.fft2DV Forward
+
+fourierTransformSelfLiftFor :: Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double))
+fourierTransformSelfLiftFor = fft2DRegular Forward
 
 fourierTransformFor :: Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double))
 fourierTransformFor = collect . tabulate . mapSeq (fft2DFor Forward) . toSeqOuter
@@ -146,7 +176,7 @@ time_ a = do t1 <- getSystemTime
              t2 <- getSystemTime
              return $ P.show (diffUTCTime (systemToUTCTime t2) (systemToUTCTime t1) )
 
-myenv :: Bool -> (Int, Int, Int, Int, Int, Int)
+myenv :: Maybe Bool -> (Int, Int, Int, Int, Int, Int)
       -> (forall a b. (Arrays a, Arrays b) => (Acc a -> Acc b) -> a -> b)
       -> (Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double)))
       -> IO (MatrixVec (Complex Double), MatrixVec (Complex Double), MatrixVec (Complex Double), MatrixVec (Complex Double), MatrixVec (Complex Double), MatrixVec (Complex Double)
@@ -175,13 +205,15 @@ myenv reg (a,b,c,d,e,f) run1_ fun = do
     evaluate (runinp inpe)
     evaluate (runinp inpf)
     P.putStrLn "Compiling function"
-    if reg then do P.putStrLn "Compiling regular"; clearforceIrreg;
-           else do P.putStrLn "Compiling irregular"; setforceIrreg;
+    case reg of
+        Nothing    -> return ()
+        Just True  -> do P.putStrLn "Compiling regular"; clearforceIrreg;
+        Just False -> do P.putStrLn "Compiling irregular"; setforceIrreg;
     time_ (evaluate runner) >>= (\x -> P.putStrLn ("Compiling took " P.++ x))
     P.putStrLn "Done with setup"
     return (inpa, inpb, inpc, inpd, inpe, inpf, runner)
 
-myenv2 :: Bool -> Int
+myenv2 :: Maybe Bool -> Int
        -> (forall a b. (Arrays a, Arrays b) => (Acc a -> Acc b) -> a -> b)
        -> (Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double)))
        -> IO (Scalar Int, Scalar Int -> MatrixVec (Complex Double))
@@ -192,8 +224,10 @@ myenv2 reg a run1_ fun = do
     
     
     P.putStrLn "Compiling function"
-    if reg then do P.putStrLn "Compiling regular"; clearforceIrreg;
-           else do P.putStrLn "Compiling irregular"; setforceIrreg;
+    case reg of
+        Nothing    -> return ()
+        Just True  -> do P.putStrLn "Compiling regular"; clearforceIrreg;
+        Just False -> do P.putStrLn "Compiling irregular"; setforceIrreg;
     time_ (evaluate runner) >>= (\x -> P.putStrLn ("Compiling took " P.++ x))
     P.putStrLn "Evaluating input"
     -- evaluate (rnf inp1)
@@ -206,7 +240,7 @@ myenv2 reg a run1_ fun = do
     P.putStrLn "Done with setup"
     return (inpa, runner)
 
-myenv3 :: Bool -> (Int, Int, Int, Int, Int, Int)
+myenv3 :: Maybe Bool -> (Int, Int, Int, Int, Int, Int)
        -> (forall a b. (Arrays a, Arrays b) => (Acc a -> Acc b) -> a -> b)
        -> (Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double)))
        -> IO (Scalar Int, Scalar Int, Scalar Int, Scalar Int, Scalar Int, Scalar Int
@@ -222,8 +256,10 @@ myenv3 reg (a,b,c,d,e,f) run1_ fun = do
     
     
     P.putStrLn "Compiling function"
-    if reg then do P.putStrLn "Compiling regular"; clearforceIrreg;
-           else do P.putStrLn "Compiling irregular"; setforceIrreg;
+    case reg of
+        Nothing    -> return ()
+        Just True  -> do P.putStrLn "Compiling regular"; clearforceIrreg;
+        Just False -> do P.putStrLn "Compiling irregular"; setforceIrreg;
     time_ (evaluate runner) >>= (\x -> P.putStrLn ("Compiling took " P.++ x))
 
     P.putStrLn "Evaluating input"
@@ -249,7 +285,7 @@ tester = do
                 , bench (P.show b) $ nf runner inpb
                 , bench (P.show c) $ nf runner inpc
                 ]
-        benches'' :: (forall a b. (Arrays a, Arrays b) => (Acc a -> Acc b) -> a -> b) -> [Int] -> String -> Bool -> (Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double))) -> Benchmark
+        benches'' :: (forall a b. (Arrays a, Arrays b) => (Acc a -> Acc b) -> a -> b) -> [Int] -> String -> Maybe Bool -> (Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double))) -> Benchmark
         benches'' run1 xs name reg f =
             let 
                 bench1 x = env (myenv2 reg x run1 f) $ \(~(inpx, runner)) -> bench (P.show x) $ nf runner inpx
@@ -271,18 +307,22 @@ tester = do
         gpubenchesNor name reg f = benches'' GPU.run1 normbench name reg f
 #endif
     defaultMain [bgroup "CPU" [
-          cpubenches "Regular"   True  fourierTransformSeq
-        , cpubenches "Irregular" False fourierTransformSeq
-        , cpubenches "Foreign"   True fourierTransformFor
-        , cpubenchesNor "Normal"    False fourierTransformNor
+          cpubenches "Regular"   (Just True)  fourierTransformSeq
+        , cpubenches "Irregular" (Just False) fourierTransformSeq
+        , cpubenches "Foreign"   Nothing fourierTransformFor
+        , cpubenches "Lifted"   Nothing fourierTransformSelfLift
+        , cpubenches "LiftedForeign"   Nothing fourierTransformSelfLiftFor
+        , cpubenchesNor "Normal"    Nothing fourierTransformNor
         ]
 #ifdef ACCELERATE_LLVM_PTX_BACKEND
         ,
         bgroup "GPU" [
-          gpubenches "Regular"   True  fourierTransformSeq
-        , gpubenches "Irregular" False fourierTransformSeq
-        , gpubenches "Foreign"   True fourierTransformForGPU
-        , gpubenchesNor "Normal"    False fourierTransformNor
+          gpubenches "Regular"   (Just True)  fourierTransformSeq
+        , gpubenches "Irregular" (Just False) fourierTransformSeq
+        , gpubenches "Foreign"   Nothing fourierTransformForGPU
+        , gpubenches "Lifted"   Nothing fourierTransformSelfLift
+        , gpubenches "LiftedForeign"   Nothing fourierTransformSelfLiftFor
+        , gpubenchesNor "Normal"    Nothing fourierTransformNor
         ]
 #endif
         ]

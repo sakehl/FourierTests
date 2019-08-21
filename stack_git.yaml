@@ -32,7 +32,7 @@ extra-deps:
     - accelerate-llvm-ptx 
 
 - git:    https://github.com/sakehl/accelerate-fft.git
-  commit: 1e623283e816bc7ac01d0fd5adc4ce3616b25d9d
+  commit: 2f1a5d1201b0ac565b869810b82f0884fb2312fe
 # - accelerate-fft-1.1.0.0
 
 - git: https://github.com/sakehl/llvm-hs.git
@@ -61,7 +61,7 @@ flags:
   accelerate-fft:
     llvm-ptx: true
     llvm-cpu: true
-  TestSeq:
+  FourierTest:
     llvm-ptx: true
 
 #  accelerate-llvm-native:
