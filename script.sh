@@ -8,7 +8,7 @@ date=$(date '+%Y_%m_%d')
 # run="time stack run --verbosity silent -- --output results"
 . init.sh
 #GPU stuff
-for i in "Foreign" "Regular" "Irregular"
+for i in "Foreign" "Regular" "Irregular" "Lifted" "LiftedForeign"
 do
   for j in "1" "100" "1000" "5000" "10000" "20000"
   do
@@ -17,7 +17,7 @@ do
 done
 
 # CPU stuff
-for i in "Regular" "Irregular" "Foreign"
+for i in "Regular" "Irregular" "Foreign" "Lifted" "LiftedForeign"
 do
   for j in "1" "100" "1000" "2000" "5000" "10000"
   do
