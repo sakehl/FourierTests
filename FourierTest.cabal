@@ -33,6 +33,8 @@ library
         FourierTest
         FFT
         FFTAdhoc
+        QuickSort
+        QuickSortTest
     c-sources:
         c++/multi.cpp
     hs-source-dirs: src

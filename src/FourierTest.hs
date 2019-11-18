@@ -75,10 +75,9 @@ inputN :: Int -> MatrixVec (Complex Double)
 inputN n = fromList (Z :. n :. 32 :. 32) [ (P.sin x :+ P.cos x) | x <- [0..] ]
 
 inputNAcc :: Acc (Scalar Int) -> Acc (MatrixVec (Complex Double))
-inputNAcc (the -> n) = compute $ generate (index3 n 32 32) (\sh -> let x = shapeSize' sh in  lift $ x/n' :+ n'/x )
-    where
-        shapeSize' (unlift -> Z :. z :. y :. x) = A.fromIntegral $ (z+1) * (y+1) * (x+1)
-        n' = A.fromIntegral n
+inputNAcc (the -> n) = compute $ generate (index3 n 32 32) (\sh -> let x = A.fromIntegral $ 1 + indexHead sh              :: Exp Double
+                                                                       y = A.fromIntegral $1 + (indexHead . indexTail) sh :: Exp Double
+                                                                   in  lift $ x :+ x )
 
 input :: Matrix (Complex Double)
 input = fromList (Z :. 32 :. 32) [ (P.sin x :+ P.cos x) | x <- [0..] ]
@@ -236,7 +235,8 @@ myenv2 reg a run1_ fun = do
     -- evaluate (rnf inp1000)
     -- evaluate (rnf inp10000)
     -- evaluate (rnf inp100000)
-    evaluate (runner inpa)
+    let testx = indexArray  (runner inpa) (Z :. 0 :. 0 :. 0)
+    P.putStrLn (P.show testx)
     P.putStrLn "Done with setup"
     return (inpa, runner)
 
