@@ -2,11 +2,11 @@
 #SBATCH -t 2:00:00
 #SBATCH -N 1
 #SBATCH -p gpu
-
+cd $HOME/lvandenhaak/FourierTests
 #BENCHS="Regular"
 date=$(date '+%Y_%m_%d')
 # run="time stack run --verbosity silent -- --output results"
-
+. init.sh
 #GPU stuff
 for i in "Foreign" "Regular" "Irregular" "Lifted" "LiftedForeign"
 do
