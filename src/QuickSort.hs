@@ -49,7 +49,7 @@ type State =
 
 step :: A.Acc State -> A.Acc State
 -- step (A.T3 values headFlags _) = (A.T3 values' headFlags' (writes 1))
-step (A.T2 values headFlags) = (A.T2 values' headFlags')
+step (A.T2 values headFlags) = A.T2 values' headFlags'
   where
     -- Per element, the pivot of the segment of that element
     -- For each segment, we just take the first element as pivot
@@ -75,7 +75,8 @@ step (A.T2 values headFlags) = (A.T2 values' headFlags')
     permutation = A.zipWith5 partitionPermuteIndex isLarger startIndex indicesSmaller indicesLarger countSmaller
     
     -- Perform the permutation
-    values' = A.scatter permutation (A.fill (A.shape values) undef) values
+    -- values' = A.scatter permutation (A.fill (A.shape values) undef) values
+    values' = A.permute const (A.fill (A.shape values) undef) (A.index1 . (permutation A.!)) values
 
     -- Update the head flags for the next iteration (the 'recursive call' in a traditional implementation)
     -- Mark new section starts at:
@@ -90,8 +91,7 @@ step (A.T2 values headFlags) = (A.T2 values' headFlags')
     headFlags' =
         -- Note that (writes 1) may go out of bounds of the values array.
         -- We made the headFlags array one larger, such that this gives no problems.
-        writeFlags (writes 0) $ writeFlags (writes 1) $ headFlags
-        -- writeFlags (writes 0) $ headFlags
+        writeFlags (writes 0) $ writeFlags (writes 1) headFlags
 
 -- Checks whether all segments have length 1. If that is the case, then the loop may terminate.
 condition :: A.Acc State -> A.Acc (A.Scalar Bool)
@@ -138,4 +138,5 @@ postscanSegHead f headFlags values
 
 -- Writes True to the specified indices in a flags arrays
 writeFlags :: A.Acc (A.Vector A.DIM1) -> A.Acc (A.Vector Bool) -> A.Acc (A.Vector Bool)
-writeFlags writes flags = A.permute (A.||) flags (writes A.!) (A.fill (A.shape writes) $ A.constant True)
+writeFlags writes flags = A.permute const flags (writes A.!) (A.fill (A.shape writes) $ A.constant True)
+-- writeFlags writes flags = A.scatter (A.map A.unindex1 writes) flags (A.fill (A.shape writes) $ A.constant True)

@@ -269,8 +269,8 @@ myenv3 reg (a,b,c,d,e,f) run1_ fun = do
     P.putStrLn "Done with setup"
     return (inpa, inpb, inpc, inpd, inpe, inpf, runner)
 
-tester :: IO ()
-tester = do
+tester :: [Benchmark]
+tester =
     let 
         benches' name (a,b,c,d,e,f) ~(inpa, inpb, inpc, inpd, inpe, inpf, runner) = bgroup name [
                   bench (P.show a) $ nf runner inpa
@@ -306,23 +306,23 @@ tester = do
         gpubenches name reg f = benches'' GPU.run1 gpunums1 name reg f
         gpubenchesNor name reg f = benches'' GPU.run1 normbench name reg f
 #endif
-    defaultMain [bgroup "CPU" [
-          cpubenches "Regular"   (Just True)  fourierTransformSeq
-        , cpubenches "Irregular" (Just False) fourierTransformSeq
-        , cpubenches "Foreign"   Nothing fourierTransformFor
-        , cpubenches "Lifted"   Nothing fourierTransformSelfLift
-        , cpubenches "LiftedForeign"   Nothing fourierTransformSelfLiftFor
-        , cpubenchesNor "Normal"    Nothing fourierTransformNor
-        ]
+    in [bgroup "CPU" [
+                cpubenches "Regular"   (Just True)  fourierTransformSeq
+                , cpubenches "Irregular" (Just False) fourierTransformSeq
+                , cpubenches "Foreign"   Nothing fourierTransformFor
+                , cpubenches "Lifted"   Nothing fourierTransformSelfLift
+                , cpubenches "LiftedForeign"   Nothing fourierTransformSelfLiftFor
+                , cpubenchesNor "Normal"    Nothing fourierTransformNor
+                ]
 #ifdef ACCELERATE_LLVM_PTX_BACKEND
-        ,
-        bgroup "GPU" [
-          gpubenches "Regular"   (Just True)  fourierTransformSeq
-        , gpubenches "Irregular" (Just False) fourierTransformSeq
-        , gpubenches "Foreign"   Nothing fourierTransformForGPU
-        , gpubenches "Lifted"   Nothing fourierTransformSelfLift
-        , gpubenches "LiftedForeign"   Nothing fourierTransformSelfLiftFor
-        , gpubenchesNor "Normal"    Nothing fourierTransformNor
-        ]
+            ,
+                bgroup "GPU" [
+                gpubenches "Regular"   (Just True)  fourierTransformSeq
+                , gpubenches "Irregular" (Just False) fourierTransformSeq
+                , gpubenches "Foreign"   Nothing fourierTransformForGPU
+                , gpubenches "Lifted"   Nothing fourierTransformSelfLift
+                , gpubenches "LiftedForeign"   Nothing fourierTransformSelfLiftFor
+                , gpubenchesNor "Normal"    Nothing fourierTransformNor
+                ]
 #endif
-        ]
+            ]

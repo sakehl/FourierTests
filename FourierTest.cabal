@@ -35,6 +35,7 @@ library
         FFTAdhoc
         QuickSort
         QuickSortTest
+        ReadFile
     c-sources:
         c++/multi.cpp
     hs-source-dirs: src
@@ -46,6 +47,7 @@ library
     build-depends:
         base >=4.7 && <5,
         accelerate -any,
+        accelerate-io -any,
         accelerate-llvm -any,
         accelerate-llvm-native -any,
         llvm-hs -any,
@@ -57,7 +59,9 @@ library
         deepseq,
         lens,
         lens-accelerate,
-        time
+        time,
+        vector,
+        bytestring
 
     if flag(llvm-ptx)
         cpp-options:        -DACCELERATE_LLVM_PTX_BACKEND
@@ -84,7 +88,8 @@ executable FourierTest-exe
         accelerate-llvm -any,
         accelerate-llvm-native -any,
         llvm-hs -any,
-        llvm-hs-pure -any
+        llvm-hs-pure -any,
+        criterion
 
     if flag(llvm-ptx)
         cpp-options:        -DACCELERATE_LLVM_PTX_BACKEND

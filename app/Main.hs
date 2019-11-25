@@ -1,6 +1,7 @@
 module Main where
 
 import FourierTest
+import QuickSortTest
 
 import Data.Array.Accelerate                              as A hiding (fromInteger, fromRational, fromIntegral)
 import qualified Data.Array.Accelerate                    as A (fromInteger, fromRational, fromIntegral)
@@ -14,10 +15,12 @@ import Prelude as P (fromIntegral, fromInteger, fromRational, String, return, (>
 import Debug.Trace
 import Data.Array.Accelerate.Debug as D
 
+import Criterion.Main
+
 
 main :: IO ()
 main = do
-    tester
+    defaultMain [bgroup "Fourier" FourierTest.tester, bgroup "QuickSort" QuickSortTest.tester]
     --setFlag dump_vectorisation
     --P.print result2
     --P.print "hello" -- $ CPU.run result5

@@ -16,3 +16,4 @@ cabal.sandbox.config
 .stack-work/
 results/*
 stack.yaml.lock
+Futhark/lib
