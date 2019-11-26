@@ -17,3 +17,7 @@ cabal.sandbox.config
 results/*
 stack.yaml.lock
 Futhark/lib
+
+*.in
+
+*.out

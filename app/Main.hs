@@ -21,6 +21,10 @@ import Criterion.Main
 main :: IO ()
 main = do
     defaultMain [bgroup "Fourier" FourierTest.tester, bgroup "QuickSort" QuickSortTest.tester]
+    -- fileTest 1 1000
+    -- fileTest 10 1000
+    -- fileTest 100 1000
+    return ()
     --setFlag dump_vectorisation
     --P.print result2
     --P.print "hello" -- $ CPU.run result5

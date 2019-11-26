@@ -3,8 +3,32 @@
 -- How quickly can we reduce arrays?
 --
 -- ==
--- input @ list_10_10.in
--- input @ list_100_1000.in
+-- input  @ list_1000_1.in
+-- output @ list_1000_1.out
+-- input  @ list_1000_100.in
+-- output @ list_1000_100.out
+-- input  @ list_1000_1000.in
+-- output @ list_1000_1000.out
+-- input  @ list_1000_2000.in
+-- output @ list_1000_2000.out
+-- input  @ list_1000_5000.in
+-- output @ list_1000_5000.out
+-- input  @ list_1000_10000.in
+-- output @ list_1000_10000.out
+
+-- ==
+-- input  @ list_100_1.in
+-- output @ list_100_1.out
+-- input  @ list_100_100.in
+-- output @ list_100_100.out
+-- input  @ list_100_1000.in
+-- output @ list_100_1000.out
+-- input  @ list_100_2000.in
+-- output @ list_100_2000.out
+-- input  @ list_100_5000.in
+-- output @ list_100_5000.out
+-- input  @ list_100_10000.in
+-- output @ list_100_10000.out
 
 -- Hi
 -- ==
