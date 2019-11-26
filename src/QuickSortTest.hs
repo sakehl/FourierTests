@@ -53,12 +53,6 @@ isSort xs = isSortedBy (P.<=) . toList $ xs
 inputN :: Int -> Matrix Int
 inputN n = fromList (Z :. n :. 32) [P.floor (100 * P.cos x) | x <- [0..] ]
 
-inputN2 :: Int -> [Vector Int]
-inputN2 n = P.replicate n (fromList (Z :. 1024) [P.floor (100 * P.cos x) | x <- [0..] ])
-
-inputN3 :: Int -> [Vector Int]
-inputN3 n = P.replicate n (fromList (Z :. 8) [P.floor (100 * P.cos x) | x <- [0..] ])
-
 inputNAcc :: Acc (Scalar Int) -> Acc (Matrix Int)
 inputNAcc n = generate (index2 (the n) 100) (\(unlift .unindex2->(i :: Exp Int,j :: Exp Int)) -> let k = A.fromIntegral (i*32+j) :: Exp Double
                                                                                                 in floor $ 100 * cos k)
@@ -68,20 +62,6 @@ quickSortVec = collect . tabulate . mapSeq (afst . quicksort) . toSeq2ndInner
 
 quickSortVecB :: Acc (Matrix Int) -> Acc (Matrix Bool)
 quickSortVecB = collect . tabulate . mapSeq (asnd . quicksort) . toSeq2ndInner
-
-quickSortNor' :: Acc (Matrix Int) -> Acc (Matrix Int)
-quickSortNor' xss = result
-  where 
-    c0 :: Exp Int
-    c0 = constant 0
-    slix     = lift (Z:.c0:.All)
-    theslice :: Acc (Vector Int)
-    theslice = slice xss slix
-
-    sh     = indexTail . indexTrans . A.shape $ xss
-    onesh  = indexTrans $ lift (sh :. constant 1)
-
-    result = reshape onesh . afst . quicksort $ theslice
 
 quickSortNor :: Acc (Matrix Int) -> Acc (Matrix Int)
 quickSortNor xss = result
@@ -104,9 +84,8 @@ quickSortNor xss = result
                 transform = afst . quicksort $ theslice
                 reshaped = reshape onesh transform
 
-                res = transpose $ (transpose a) ++ (transpose reshaped)
+                res = transpose $ transpose a ++ transpose reshaped
             in res
-
 
         afor :: forall a. Arrays a => Exp Int -> (Exp Int -> Acc a -> Acc a) -> Acc a -> Acc a
         afor n f m = let
@@ -128,8 +107,11 @@ time_ a = do t1 <- getSystemTime
              t2 <- getSystemTime
              return $ P.show (diffUTCTime (systemToUTCTime t2) (systemToUTCTime t1) )
 
-readFiles :: Int -> Int -> IO (Array DIM2 Int)
+readFiles :: Int -> Int -> IO (Matrix Int)
 readFiles n m = readArrayFile ("Futhark/list_" P.++ P.show m P.++ "_" P.++ P.show n P.++ ".in") (Z:.n:.m)
+
+readFilesV :: Int -> Int -> IO (Vector Int)
+readFilesV _ m = readArrayFile ("Futhark/list_" P.++ P.show m P.++ "_" P.++ P.show 1 P.++ ".in") (Z:.m)
 
 fileTest :: Int -> Int -> IO Int
 fileTest n m = do
@@ -163,20 +145,21 @@ fileTest n m = do
     time_ (evaluate (runner inp)) >>= (\x -> P.putStrLn ("Execution3 took " P.++ x))
     return (indexArray (runner inp) (Z:.0:.0) )
 
-
-myenv :: Maybe Bool -> Int
+myenv :: (a ~ Array sh e, Shape sh, Elt e, e ~Int)
+      => Maybe Bool -> Int
+      -> (Int -> Int -> IO a)
       -> (Int, Int, Int, Int, Int, Int)
       -> (forall a b. (Arrays a, Arrays b) => (Acc a -> Acc b) -> a -> b)
-      -> (Acc (Matrix Int) -> Acc (Matrix Int))
-      -> IO (Matrix Int, Matrix Int, Matrix Int, Matrix Int, Matrix Int, Matrix Int
-            , Matrix Int -> Matrix Int)
-myenv reg n (a,b,c,d,e,f) run1_ fun = do
-    inpa <- readFiles a n
-    inpb <- readFiles b n
-    inpc <- readFiles c n
-    inpd <- readFiles d n
-    inpe <- readFiles e n
-    inpf <- readFiles f n
+      -> (Acc a -> Acc a)
+      -> IO (a, a, a, a, a, a
+            , a -> a)
+myenv reg n getInput (a,b,c,d,e,f) run1_ fun = do
+    inpa <- getInput a n
+    inpb <- getInput b n
+    inpc <- getInput c n
+    inpd <- getInput d n
+    inpe <- getInput e n
+    inpf <- getInput f n
     let runner = run1_ fun
         runinp = run1_ $ map (+0)
     
@@ -199,38 +182,31 @@ myenv reg n (a,b,c,d,e,f) run1_ fun = do
     P.putStrLn "Done with setup"
     return (inpa, inpb, inpc, inpd, inpe, inpf, runner)
 
-myenv2 :: (Arrays a, Shape sh, Elt e, b ~ Array sh e)
-       => Maybe Bool -> Int
-       -> (forall a b. (Arrays a, Arrays b) => (Acc a -> Acc b) -> a -> b)
-       -> (Acc (Scalar Int) -> Acc a)
-       -> (Acc a -> Acc b)
-       -> IO (Scalar Int, Scalar Int -> b)
-myenv2 reg a run1_ inputNAcc fun = do
-    let inpa = fromList Z [a]
-        -- inpa = inputN a
-        runner = run1_ (fun . inputNAcc)
+myenv2 :: (a ~ Array sh e, Shape sh, Elt e, e ~Int)
+      => Maybe Bool -> Int
+      -> (Int -> Int -> IO a)
+      -> Int
+      -> (forall a b. (Arrays a, Arrays b) => (Acc a -> Acc b) -> a -> b)
+      -> (Acc a -> Acc a)
+      -> IO (a, a -> a)
+myenv2 reg n getInput m run1_ fun = do
+    inp <- getInput m n
+    let runner = run1_ fun
+        runinp = run1_ $ map (+0)
     
-    P.putStrLn ("Chunks of " P.++ P.show a)
-    setEnv "ACCELERATE_FLAGS" ("-chunk-size=" P.++ P.show a)
-    
+    P.putStrLn ("Chunks of " P.++ P.show m)
+    setEnv "ACCELERATE_FLAGS" ("-chunk-size=" P.++ P.show m)
+
+    P.putStrLn "Evaluating input"
+    evaluate (runinp inp)
     P.putStrLn "Compiling function"
     case reg of
         Nothing    -> return ()
         Just True  -> do P.putStrLn "Compiling regular"; clearforceIrreg;
         Just False -> do P.putStrLn "Compiling irregular"; setforceIrreg;
     time_ (evaluate runner) >>= (\x -> P.putStrLn ("Compiling took " P.++ x))
-    
-    P.putStrLn "Evaluating input"
-    -- evaluate (rnf inp1)
-    -- evaluate (rnf inp10)
-    -- evaluate (rnf inp100)
-    -- evaluate (rnf inp1000)
-    -- evaluate (rnf inp10000)
-    -- evaluate (rnf inp100000)
-    let testx = indexArray (runner inpa) S.empty
-    time_ (P.putStrLn (P.show testx)) >>= (\x -> P.putStrLn ("Evaluation took " P.++ x))
     P.putStrLn "Done with setup"
-    return (inpa, runner)
+    return (inp, runner)
 
 tester :: [Benchmark]
 tester =
@@ -247,29 +223,39 @@ tester =
         benches'' :: (a ~ Array DIM2 Int, b ~ Array DIM2 Int) => (forall a b. (Arrays a, Arrays b) => (Acc a -> Acc b) -> a -> b) -> [Int] -> String -> Maybe Bool -> (Acc a -> Acc b) -> Benchmark
         benches'' run1 xs name reg f =
             let 
-                bench1 x = env (myenv2 reg x run1 inputNAcc f) $ \(~(inpx, runner)) -> bench (P.show x) $ nf runner inpx
+                bench1 x = env (myenv2 reg 100 readFiles x run1 f) $ \(~(inpx, runner)) -> bench (P.show x) $ nf runner inpx
             in bgroup name $ P.map bench1 xs
+
+        -- benchFlat :: (forall a b. (Arrays a, Arrays b) => (Acc a -> Acc b) -> a -> b) -> (Acc a -> Acc b) -> Benchmark
+        -- benchFlat run1 f = 
+        --     let 
+        --         bench1 x 
         
         cpunums1 = [1,100,1000,2000,5000,10000]
         gpunums1 = [1,100,1000,     5000,10000,20000]
-        normbench = [1,100,1000]
-        -- cpubenches name reg f = benches'' CPU.run1 cpunums1 name reg f
-        cpubenchesNor name reg f = benches'' CPU.run1 normbench name reg f
-
         cpunums2 = (1,100,1000,2000,5000,10000)
         gpunums2 = (1,100,1000     ,5000,10000,20000)
-        cpubenches name reg f = env (myenv reg 100 cpunums2 CPU.run1 f) (benches' name cpunums2)
+
+        normbench = [1,100,1000]
+        flatbench = ( 100,1000,2000,5000,10000,20000)
+        
+        cpubenches name reg f = env (myenv reg 100 readFiles cpunums2 CPU.run1 f) (benches' name cpunums2)
+        -- cpubenches name reg f = benches'' CPU.run1 cpunums1 name reg f
+        cpubenchesNor name reg f = benches'' CPU.run1 normbench name reg f
+        cpubenchesFlat name reg f = env (myenv reg 100 readFilesV flatbench CPU.run1 f) (benches' name flatbench)
+
 #ifdef ACCELERATE_LLVM_PTX_BACKEND
         gpubenches name reg f = benches'' GPU.run1 gpunums1 name reg f
+        -- gpubenches name reg f = env (myenv reg 100 readFiles gpunums2 GPU.run1 f) (benches' name cpunums2)
         gpubenchesNor name reg f = benches'' GPU.run1 normbench name reg f
 
-        -- gpubenches name reg f = env (myenv reg 100 gpunums2 GPU.run1 f) (benches' name cpunums2)
+        gpubenchesFlat name reg f = env (myenv reg 100 readFilesV flatbench GPU.run1 f) (benches' name flatbench)
 #endif
     in [bgroup "CPU" [
                 cpubenches "Regular"   (Just True)  quickSortVec
                 , cpubenches "Irregular" (Just False) quickSortVec
                 , cpubenchesNor "Normal"    Nothing quickSortNor
-                , cpubenchesNor "Normal'"    Nothing quickSortNor'
+                , cpubenchesFlat "Flat"    Nothing (afst. quicksort)
                 ]
 #ifdef ACCELERATE_LLVM_PTX_BACKEND
             ,
@@ -277,7 +263,7 @@ tester =
                 gpubenches "Regular"   (Just True)  quickSortVec
                 , gpubenches "Irregular" (Just False) quickSortVec
                 , gpubenchesNor "Normal"    Nothing quickSortNor
-                , gpubenchesNor "Normal'"    Nothing quickSortNor'
+                , gpubenchesFlat "Flat"    Nothing (afst. quicksort)
                 ]
 #endif
             ]
