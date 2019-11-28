@@ -3,7 +3,7 @@ module ReadFile where
 
 import qualified Data.ByteString.Lazy.Char8 as L
 import qualified Data.Array.Accelerate      as A hiding (fromInteger, fromRational, fromIntegral)
-import qualified Data.Array.Accelerate.IO   as A
+import qualified Data.Array.Accelerate.IO.Data.Vector.Storable as A
 import qualified Data.Vector.Storable       as U
 import System.Environment
 

@@ -6,7 +6,7 @@ module QuickSort (quicksort) where
 
 import qualified Data.Array.Accelerate as A
 -- import qualified Data.Array.Accelerate.Unsafe as A
-import qualified Data.Array.Accelerate.Pattern as A
+-- import qualified Data.Array.Accelerate.Pattern as A
 import qualified Data.Array.Accelerate.Data.Bits as A
 -- import qualified Data.Array.Accelerate.Examples.Internal as A
 import Control.Monad

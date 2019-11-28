@@ -29,10 +29,10 @@ source-repository head
 
 library
     exposed-modules:
-        Lib
-        FourierTest
-        FFT
-        FFTAdhoc
+        -- Lib
+        -- FourierTest
+        -- FFT
+        -- FFTAdhoc
         QuickSort
         QuickSortTest
         ReadFile
@@ -47,14 +47,14 @@ library
     build-depends:
         base >=4.7 && <5,
         accelerate -any,
-        accelerate-io -any,
+        accelerate-io-vector -any,
         accelerate-llvm -any,
         accelerate-llvm-native -any,
         llvm-hs -any,
         llvm-hs-pure -any,
         carray -any,
-        fft -any,
-        accelerate-fft,
+        -- fft -any,
+        -- accelerate-fft,
         criterion,
         deepseq,
         lens,
@@ -72,7 +72,7 @@ library
             bytestring,
             file-embed
         exposed-modules:
-            GPUFFT
+            -- GPUFFT
 
 executable FourierTest-exe
     main-is: Main.hs

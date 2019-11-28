@@ -1,6 +1,6 @@
 module Main where
 
-import FourierTest
+-- import FourierTest
 import QuickSortTest
 
 import Data.Array.Accelerate                              as A hiding (fromInteger, fromRational, fromIntegral)
@@ -20,7 +20,7 @@ import Criterion.Main
 
 main :: IO ()
 main = do
-    defaultMain [bgroup "Fourier" FourierTest.tester, bgroup "QuickSort" QuickSortTest.tester]
+    defaultMain [{-bgroup "Fourier" FourierTest.tester,-} bgroup "QuickSort" QuickSortTest.tester]
     -- fileTest 1 1000
     -- fileTest 10 1000
     -- fileTest 100 1000

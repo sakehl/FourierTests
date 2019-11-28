@@ -17,7 +17,7 @@ import qualified Prelude as P
 import Prelude as P (fromIntegral, fromInteger, fromRational, String, return, (>>=), (>>), IO, Maybe(..), maybe, (=<<))
 import Data.Array.Accelerate                                        as A hiding (fromInteger, fromRational, fromIntegral)
 import qualified Data.Array.Accelerate                              as A (fromInteger, fromRational, fromIntegral)
-import qualified Data.Array.Accelerate.Pattern as A
+-- import qualified Data.Array.Accelerate.Pattern as A
 
 import Data.Array.Accelerate.LLVM.Native                            as CPU
 import Data.Array.Accelerate.Interpreter                            as I
@@ -33,6 +33,8 @@ import Control.Exception
 import Data.Time.Clock.System
 import Data.Time.Clock
 import System.Environment
+import Data.Typeable
+
 
 
 import Criterion.Main
@@ -57,12 +59,28 @@ inputNAcc :: Acc (Scalar Int) -> Acc (Matrix Int)
 inputNAcc n = generate (index2 (the n) 100) (\(unlift .unindex2->(i :: Exp Int,j :: Exp Int)) -> let k = A.fromIntegral (i*32+j) :: Exp Double
                                                                                                 in floor $ 100 * cos k)
 
-quickSortVec :: Acc (Matrix Int) -> Acc (Matrix Int)
-quickSortVec = collect . tabulate . mapSeq (afst . quicksort) . toSeq2ndInner
+-- quickSortVec :: Acc (Matrix Int) -> Acc (Matrix Int)
+-- quickSortVec = collect . tabulate . mapSeq (afst . quicksort) . toSeq2ndInner
 
-quickSortVecB :: Acc (Matrix Int) -> Acc (Matrix Bool)
-quickSortVecB = collect . tabulate . mapSeq (asnd . quicksort) . toSeq2ndInner
+-- quickSortVecB :: Acc (Matrix Int) -> Acc (Matrix Bool)
+-- quickSortVecB = collect . tabulate . mapSeq (asnd . quicksort) . toSeq2ndInner
 
+indexTrans :: forall sh . Shape sh => Exp sh -> Exp sh
+indexTrans sh | Just Refl <- eqT :: Maybe (sh :~: DIM0)
+              , I0 <- sh = I0
+              | Just Refl <- eqT :: Maybe (sh :~: DIM1)
+              , I1 a <- sh = I1 a
+              | Just Refl <- eqT :: Maybe (sh :~: DIM2)
+              , I2 a b <- sh = I2 b a
+              | Just Refl <- eqT :: Maybe (sh :~: DIM3)
+              , I3 a b c <- sh = I3 c b a
+              | Just Refl <- eqT :: Maybe (sh :~: DIM4)
+              , I4 a b c d <- sh = I4 d c b a
+              | Just Refl <- eqT :: Maybe (sh :~: DIM5)
+              , I5 a b c d e<- sh = I5 e d c b a
+              | Just Refl <- eqT :: Maybe (sh :~: DIM6)
+              , I6 a b c d e f <- sh = I6 f e d c b a
+              
 quickSortNor :: Acc (Matrix Int) -> Acc (Matrix Int)
 quickSortNor xss = result
     where
@@ -113,37 +131,34 @@ readFiles n m = readArrayFile ("Futhark/list_" P.++ P.show m P.++ "_" P.++ P.sho
 readFilesV :: Int -> Int -> IO (Vector Int)
 readFilesV _ m = readArrayFile ("Futhark/list_" P.++ P.show m P.++ "_" P.++ P.show 1 P.++ ".in") (Z:.m)
 
-fileTest :: Int -> Int -> IO Int
-fileTest n m = do
-    inp <- readFiles n m
-    P.putStrLn "Evaluating input"
+-- fileTest :: Int -> Int -> IO Int
+-- fileTest n m = do
+--     inp <- readFiles n m
+--     P.putStrLn "Evaluating input"
     
-#ifdef ACCELERATE_LLVM_PTX_BACKEND2
-    P.putStrLn "GPU"
-    let inprunner = GPU.run1 $ map (+1)
-#else
-    P.putStrLn "CPU"
-    let inprunner = CPU.run1 $ map (+1)
-#endif
-    P.print $ indexArray (inprunner inp) (Z:.0:.0)
+-- #ifdef ACCELERATE_LLVM_PTX_BACKEND2
+--     P.putStrLn "GPU"
+--     let inprunner = GPU.run1 $ map (+1)
+-- #else
+--     P.putStrLn "CPU"
+--     let inprunner = CPU.run1 $ map (+1)
+-- #endif
+--     P.print $ indexArray (inprunner inp) (Z:.0:.0)
 
-    P.putStrLn ("Chunks of " P.++ P.show n)
-    setEnv "ACCELERATE_FLAGS" ("-chunk-size=" P.++ P.show n)
+--     P.putStrLn ("Chunks of " P.++ P.show n)
+--     setEnv quickSortVecr = GPU.run1 quickSortVec
+-- #else
+--     let runner = CPU.run1 quickSortVec
+-- #endif
 
-#ifdef ACCELERATE_LLVM_PTX_BACKEND2
-    let runner = GPU.run1 quickSortVec
-#else
-    let runner = CPU.run1 quickSortVec
-#endif
+--     P.putStrLn "Compiling function"
+--     time_ (evaluate runner) >>= (\x -> P.putStrLn ("Compiling took " P.++ x))
+--     time_ (evaluate (runner $ inputN 2)) >>= (\x -> P.putStrLn ("Small testrun took " P.++ x))
 
-    P.putStrLn "Compiling function"
-    time_ (evaluate runner) >>= (\x -> P.putStrLn ("Compiling took " P.++ x))
-    time_ (evaluate (runner $ inputN 2)) >>= (\x -> P.putStrLn ("Small testrun took " P.++ x))
-
-    time_ (evaluate (runner inp)) >>= (\x -> P.putStrLn ("Execution took " P.++ x))
-    time_ (evaluate (runner inp)) >>= (\x -> P.putStrLn ("Execution2 took " P.++ x))
-    time_ (evaluate (runner inp)) >>= (\x -> P.putStrLn ("Execution3 took " P.++ x))
-    return (indexArray (runner inp) (Z:.0:.0) )
+--     time_ (evaluate (runner inp)) >>= (\x -> P.putStrLn ("Execution took " P.++ x))
+--     time_ (evaluate (runner inp)) >>= (\x -> P.putStrLn ("Execution2 took " P.++ x))
+--     time_ (evaluate (runner inp)) >>= (\x -> P.putStrLn ("Execution3 took " P.++ x))
+--     return (indexArray (runner inp) (Z:.0:.0) )
 
 myenv :: (a ~ Array sh e, Shape sh, Elt e, e ~Int)
       => Maybe Bool -> Int
@@ -174,10 +189,10 @@ myenv reg m getInput (a,b,c,d,e,f) run1_ fun = do
     evaluate (runinp inpe)
     evaluate (runinp inpf)
     P.putStrLn "Compiling function"
-    case reg of
-        Nothing    -> return ()
-        Just True  -> do P.putStrLn "Compiling regular"; clearforceIrreg;
-        Just False -> do P.putStrLn "Compiling irregular"; setforceIrreg;
+    -- case reg of
+    --     Nothing    -> return ()
+    --     Just True  -> do P.putStrLn "Compiling regular"; clearforceIrreg;
+    --     Just False -> do P.putStrLn "Compiling irregular"; setforceIrreg;
     time_ (evaluate runner) >>= (\x -> P.putStrLn ("Compiling took " P.++ x))
     P.putStrLn "Done with setup"
     return (inpa, inpb, inpc, inpd, inpe, inpf, runner)
@@ -210,10 +225,10 @@ myenv2 reg n getInput m run1_ fun = do
     P.putStrLn "Evaluating input"
     evaluate (runinp inp)
     P.putStrLn "Compiling function"
-    case reg of
-        Nothing    -> return ()
-        Just True  -> do P.putStrLn "Compiling regular"; clearforceIrreg;
-        Just False -> do P.putStrLn "Compiling irregular"; setforceIrreg;
+    -- case reg of
+    --     Nothing    -> return ()
+    --     Just True  -> do P.putStrLn "Compiling regular"; clearforceIrreg;
+    --     Just False -> do P.putStrLn "Compiling irregular"; setforceIrreg;
     time_ (evaluate runner) >>= (\x -> P.putStrLn ("Compiling took " P.++ x))
     P.putStrLn "Done with setup"
     return (inp, runner)
@@ -262,17 +277,17 @@ tester =
         gpubenchesFlat name reg f = env (myenvFlat reg 1 readFilesV flatbench GPU.run1 f) (benches' name flatbench)
 #endif
     in [bgroup "CPU" [
-                cpubenches "Regular"   (Just True)  quickSortVec
-                , cpubenches "Irregular" (Just False) quickSortVec
-                , cpubenchesNor "Normal"    Nothing quickSortNor
+                -- cpubenches "Regular"   (Just True)  quickSortVec
+                -- , cpubenches "Irregular" (Just False) quickSortVec
+                  cpubenchesNor "Normal"    Nothing quickSortNor
                 , cpubenchesFlat "Flat"    Nothing (afst. quicksort)
                 ]
 #ifdef ACCELERATE_LLVM_PTX_BACKEND
             ,
                 bgroup "GPU" [
-                gpubenches "Regular"   (Just True)  quickSortVec
-                , gpubenches "Irregular" (Just False) quickSortVec
-                , gpubenchesNor "Normal"    Nothing quickSortNor
+                -- gpubenches "Regular"   (Just True)  quickSortVec
+                -- , gpubenches "Irregular" (Just False) quickSortVec
+                  gpubenchesNor "Normal"    Nothing quickSortNor
                 , gpubenchesFlat "Flat"    Nothing (afst. quicksort)
                 ]
 #endif
