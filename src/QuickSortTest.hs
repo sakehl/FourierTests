@@ -118,7 +118,7 @@ fileTest n m = do
     inp <- readFiles n m
     P.putStrLn "Evaluating input"
     
-#ifdef ACCELERATE_LLVM_PTX_BACKEND2
+#ifdef ACCELERATE_LLVM_PTX_BACKEND
     P.putStrLn "GPU"
     let inprunner = GPU.run1 $ map (+1)
 #else
@@ -130,7 +130,7 @@ fileTest n m = do
     P.putStrLn ("Chunks of " P.++ P.show n)
     setEnv "ACCELERATE_FLAGS" ("-chunk-size=" P.++ P.show n)
 
-#ifdef ACCELERATE_LLVM_PTX_BACKEND2
+#ifdef ACCELERATE_LLVM_PTX_BACKEND
     let runner = GPU.run1 quickSortVec
 #else
     let runner = CPU.run1 quickSortVec
@@ -138,11 +138,11 @@ fileTest n m = do
 
     P.putStrLn "Compiling function"
     time_ (evaluate runner) >>= (\x -> P.putStrLn ("Compiling took " P.++ x))
-    time_ (evaluate (runner $ inputN 2)) >>= (\x -> P.putStrLn ("Small testrun took " P.++ x))
+    -- time_ (evaluate (runner $ inputN 2)) >>= (\x -> P.putStrLn ("Small testrun took " P.++ x))
 
     time_ (evaluate (runner inp)) >>= (\x -> P.putStrLn ("Execution took " P.++ x))
     time_ (evaluate (runner inp)) >>= (\x -> P.putStrLn ("Execution2 took " P.++ x))
-    time_ (evaluate (runner inp)) >>= (\x -> P.putStrLn ("Execution3 took " P.++ x))
+    -- time_ (evaluate (runner inp)) >>= (\x -> P.putStrLn ("Execution3 took " P.++ x))
     return (indexArray (runner inp) (Z:.0:.0) )
 
 myenv :: (a ~ Array sh e, Shape sh, Elt e, e ~Int)
@@ -264,6 +264,8 @@ tester =
     in [bgroup "CPU" [
                 cpubenches "Regular" 100  (Just True)  quickSortVec
                 , cpubenches "Irregular" 100 (Just False) quickSortVec
+                , cpubenches "Regular" 1000  (Just True)  quickSortVec
+                , cpubenches "Irregular" 1000 (Just False) quickSortVec
                 , cpubenchesNor "Normal"    Nothing quickSortNor
                 , cpubenchesFlat "Flat"    Nothing (afst. quicksort)
                 ]
@@ -272,6 +274,8 @@ tester =
                 bgroup "GPU" [
                 gpubenches "Regular"  100 (Just True)  quickSortVec
                 , gpubenches "Irregular" 100 (Just False) quickSortVec
+                , gpubenches "Regular"  1000 (Just True)  quickSortVec
+                , gpubenches "Irregular" 1000 (Just False) quickSortVec
                 , gpubenchesNor "Normal"    Nothing quickSortNor
                 , gpubenchesFlat "Flat"    Nothing (afst. quicksort)
                 ]

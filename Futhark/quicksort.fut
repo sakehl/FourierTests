@@ -1,7 +1,17 @@
 
 
 -- Single lists
--- ==
+-- /==
+-- entry: quicksort1
+-- input  @ list_100_1.in
+-- input  @ list_1000_1.in
+-- input  @ list_2000_1.in
+-- input  @ list_5000_1.in
+-- input  @ list_10000_1.in
+-- input  @ list_20000_1.in
+
+-- Single lists
+-- /==
 -- entry: quicksort1
 -- input  @ list_100_1.in
 -- output @ list_100_1.out
@@ -16,8 +26,23 @@
 -- input  @ list_20000_1.in
 -- output @ list_20000_1.out
 
---
--- ==
+-- lists of 1000
+-- == 
+-- input  @ list_1000_100.in
+
+-- lists of 1000
+-- !== 
+-- input  @ list_1000_1.in
+-- input  @ list_1000_100.in
+-- input  @ list_1000_1000.in
+-- input  @ list_1000_2000.in
+-- input  @ list_1000_5000.in
+-- input  @ list_1000_10000.in
+
+-- lists of 1000
+-- /== 
+-- input  @ list_1000_1000.in
+-- output @ list_1000_1000.out
 -- input  @ list_1000_1.in
 -- output @ list_1000_1.out
 -- input  @ list_1000_100.in
@@ -31,7 +56,15 @@
 -- input  @ list_1000_10000.in
 -- output @ list_1000_10000.out
 
--- ==
+-- /==
+-- input  @ list_100_1.in
+-- input  @ list_100_100.in
+-- input  @ list_100_1000.in
+-- input  @ list_100_2000.in
+-- input  @ list_100_5000.in
+-- input  @ list_100_10000.in
+
+-- !==
 -- input  @ list_100_1.in
 -- output @ list_100_1.out
 -- input  @ list_100_100.in
@@ -46,7 +79,7 @@
 -- output @ list_100_10000.out
 
 -- Hi
--- ==
+-- !==
 -- entry: main2
 -- input { 1000 }
 -- input { 10000 }
@@ -54,7 +87,7 @@
 
 
 
-type int = i32
+type int = i64
 
 let undef : int = 0
 let undefi32 : i32 = 0
@@ -153,19 +186,19 @@ let quicksort [n] (input : [n] int) : [n] int =
 entry quicksort1 [n] (input : [][n] int) : [][n] int =
   unflatten 1 n <| quicksort <| flatten input
 
-let xs : [] int = 
-  rotate 4 
-  <| map (\x -> f32.to_i32 <| 100 * f32.cos (f32.from_fraction x 1)) 
-  <| iota 32
+-- let xs : [] int = 
+--   rotate 4 
+--   <| map (\x -> f32.to_i32 <| 100 * f32.cos (f32.from_fraction x 1)) 
+--   <| iota 32
 
-entry xss (n : i32) : [n][] int =
-  -- replicate n xs
-  unflatten n 32
-  <| map (\x -> f32.to_i32 <| 100 * f32.cos (f32.from_fraction x 10)) 
-  <| iota (32*n)
+-- let xss (n : i32) : [n][] int =
+--   -- replicate n xs
+--   unflatten n 32
+--   <| map (\x -> f32.to_i32 <| 100 * f32.cos (f32.from_fraction x 10)) 
+--   <| iota (32*n)
 
-entry main2 (n : i32) : [][] int = map quicksort (xss n)
+-- entry main2 (n : i32) : [][] int = map quicksort (xss n)
 
-entry main3 : [] int = quicksort xs
+-- entry main3 : [] int = quicksort xs
 
 let main [n] [m] (input : [n][m] int) : [n][m] int = unsafe (map quicksort input)
