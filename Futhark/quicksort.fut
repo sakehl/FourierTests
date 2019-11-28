@@ -1,6 +1,21 @@
 
 
--- How quickly can we reduce arrays?
+-- Single lists
+-- ==
+-- entry: quicksort1
+-- input  @ list_100_1.in
+-- output @ list_100_1.out
+-- input  @ list_1000_1.in
+-- output @ list_1000_1.out
+-- input  @ list_2000_1.in
+-- output @ list_2000_1.out
+-- input  @ list_5000_1.in
+-- output @ list_5000_1.out
+-- input  @ list_10000_1.in
+-- output @ list_10000_1.out
+-- input  @ list_20000_1.in
+-- output @ list_20000_1.out
+
 --
 -- ==
 -- input  @ list_1000_1.in
@@ -37,10 +52,7 @@
 -- input { 10000 }
 -- input { 1 }
 
--- Hi
--- ==
--- entry: main3
--- input {}
+
 
 type int = i32
 
@@ -137,6 +149,9 @@ let quicksort [n] (input : [n] int) : [n] int =
   let initialFlags = emptyFlags with [0] = true with [n] = true
   let (res, _) = iterate_while condition step (input, initialFlags)
   in res
+
+entry quicksort1 [n] (input : [][n] int) : [][n] int =
+  unflatten 1 n <| quicksort <| flatten input
 
 let xs : [] int = 
   rotate 4 

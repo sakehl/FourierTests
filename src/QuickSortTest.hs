@@ -153,13 +153,13 @@ myenv :: (a ~ Array sh e, Shape sh, Elt e, e ~Int)
       -> (Acc a -> Acc a)
       -> IO (a, a, a, a, a, a
             , a -> a)
-myenv reg n getInput (a,b,c,d,e,f) run1_ fun = do
-    inpa <- getInput n a
-    inpb <- getInput n b
-    inpc <- getInput n c
-    inpd <- getInput n d
-    inpe <- getInput n e
-    inpf <- getInput n f
+myenv reg m getInput (a,b,c,d,e,f) run1_ fun = do
+    inpa <- getInput a m
+    inpb <- getInput b m
+    inpc <- getInput c m
+    inpd <- getInput d m
+    inpe <- getInput e m
+    inpf <- getInput f m
     let runner = run1_ fun
         runinp = run1_ $ map (+0)
     
@@ -181,6 +181,16 @@ myenv reg n getInput (a,b,c,d,e,f) run1_ fun = do
     time_ (evaluate runner) >>= (\x -> P.putStrLn ("Compiling took " P.++ x))
     P.putStrLn "Done with setup"
     return (inpa, inpb, inpc, inpd, inpe, inpf, runner)
+
+myenvFlat :: (a ~ Array sh e, Shape sh, Elt e, e ~Int)
+      => Maybe Bool -> Int
+      -> (Int -> Int -> IO a)
+      -> (Int, Int, Int, Int, Int, Int)
+      -> (forall a b. (Arrays a, Arrays b) => (Acc a -> Acc b) -> a -> b)
+      -> (Acc a -> Acc a)
+      -> IO (a, a, a, a, a, a
+            , a -> a)
+myenvFlat reg n getInput = myenv reg n (P.flip getInput)
 
 myenv2 :: (a ~ Array sh e, Shape sh, Elt e, e ~Int)
       => Maybe Bool -> Int
@@ -242,14 +252,14 @@ tester =
         cpubenches name reg f = env (myenv reg 100 readFiles cpunums2 CPU.run1 f) (benches' name cpunums2)
         -- cpubenches name reg f = benches'' CPU.run1 cpunums1 name reg f
         cpubenchesNor name reg f = benches'' CPU.run1 normbench name reg f
-        cpubenchesFlat name reg f = env (myenv reg 1 readFilesV flatbench CPU.run1 f) (benches' name flatbench)
+        cpubenchesFlat name reg f = env (myenvFlat reg 1 readFilesV flatbench CPU.run1 f) (benches' name flatbench)
 
 #ifdef ACCELERATE_LLVM_PTX_BACKEND
         gpubenches name reg f = benches'' GPU.run1 gpunums1 name reg f
         -- gpubenches name reg f = env (myenv reg 100 readFiles gpunums2 GPU.run1 f) (benches' name cpunums2)
         gpubenchesNor name reg f = benches'' GPU.run1 normbench name reg f
 
-        gpubenchesFlat name reg f = env (myenv reg 1 readFilesV flatbench GPU.run1 f) (benches' name flatbench)
+        gpubenchesFlat name reg f = env (myenvFlat reg 1 readFilesV flatbench GPU.run1 f) (benches' name flatbench)
 #endif
     in [bgroup "CPU" [
                 cpubenches "Regular"   (Just True)  quickSortVec
