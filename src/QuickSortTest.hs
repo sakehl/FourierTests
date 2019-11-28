@@ -233,7 +233,7 @@ tester =
         benches'' :: (a ~ Array DIM2 Int, b ~ Array DIM2 Int) => (forall a b. (Arrays a, Arrays b) => (Acc a -> Acc b) -> a -> b) -> [Int] -> String -> Maybe Bool -> (Acc a -> Acc b) -> Benchmark
         benches'' run1 xs name reg f =
             let 
-                bench1 x = env (myenv2 reg 100 readFiles x run1 f) $ \(~(inpx, runner)) -> bench (P.show x) $ nf runner inpx
+                bench1 x = env (myenv2 reg 1000 readFiles x run1 f) $ \(~(inpx, runner)) -> bench (P.show x) $ nf runner inpx
             in bgroup name $ P.map bench1 xs
 
         -- benchFlat :: (forall a b. (Arrays a, Arrays b) => (Acc a -> Acc b) -> a -> b) -> (Acc a -> Acc b) -> Benchmark
@@ -249,29 +249,29 @@ tester =
         normbench = [1,100,1000]
         flatbench = ( 100,1000,2000,5000,10000,20000)
         
-        cpubenches name reg f = env (myenv reg 100 readFiles cpunums2 CPU.run1 f) (benches' name cpunums2)
+        cpubenches name n reg f = env (myenv reg n readFiles cpunums2 CPU.run1 f) (benches' (name P.++ "/" P.++ P.show n) cpunums2)
         -- cpubenches name reg f = benches'' CPU.run1 cpunums1 name reg f
         cpubenchesNor name reg f = benches'' CPU.run1 normbench name reg f
         cpubenchesFlat name reg f = env (myenvFlat reg 1 readFilesV flatbench CPU.run1 f) (benches' name flatbench)
 
 #ifdef ACCELERATE_LLVM_PTX_BACKEND
-        gpubenches name reg f = benches'' GPU.run1 gpunums1 name reg f
-        -- gpubenches name reg f = env (myenv reg 100 readFiles gpunums2 GPU.run1 f) (benches' name cpunums2)
+        -- gpubenches name reg f = benches'' GPU.run1 gpunums1 name reg f
+        gpubenches name n reg f = env (myenv reg n readFiles cpunums2 GPU.run1 f) (benches' (name P.++ "/" P.++ P.show n) cpunums2)
         gpubenchesNor name reg f = benches'' GPU.run1 normbench name reg f
 
         gpubenchesFlat name reg f = env (myenvFlat reg 1 readFilesV flatbench GPU.run1 f) (benches' name flatbench)
 #endif
     in [bgroup "CPU" [
-                cpubenches "Regular"   (Just True)  quickSortVec
-                , cpubenches "Irregular" (Just False) quickSortVec
+                cpubenches "Regular" 100  (Just True)  quickSortVec
+                , cpubenches "Irregular" 100 (Just False) quickSortVec
                 , cpubenchesNor "Normal"    Nothing quickSortNor
                 , cpubenchesFlat "Flat"    Nothing (afst. quicksort)
                 ]
 #ifdef ACCELERATE_LLVM_PTX_BACKEND
             ,
                 bgroup "GPU" [
-                gpubenches "Regular"   (Just True)  quickSortVec
-                , gpubenches "Irregular" (Just False) quickSortVec
+                gpubenches "Regular"  100 (Just True)  quickSortVec
+                , gpubenches "Irregular" 100 (Just False) quickSortVec
                 , gpubenchesNor "Normal"    Nothing quickSortNor
                 , gpubenchesFlat "Flat"    Nothing (afst. quicksort)
                 ]
