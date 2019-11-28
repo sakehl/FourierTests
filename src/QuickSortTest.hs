@@ -59,6 +59,16 @@ inputNAcc :: Acc (Scalar Int) -> Acc (Matrix Int)
 inputNAcc n = generate (index2 (the n) 100) (\(unlift .unindex2->(i :: Exp Int,j :: Exp Int)) -> let k = A.fromIntegral (i*32+j) :: Exp Double
                                                                                                 in floor $ 100 * cos k)
 
+inputGen :: (forall a. Arrays a => Acc a -> a) -> Int -> Int -> IO (Matrix Int)
+inputGen run n m = 
+    return . run $ generate (index2 (constant n) (constant m)) (\(unlift .unindex2->(i :: Exp Int,j :: Exp Int)) -> let k = A.fromIntegral (i*constant n+j) :: Exp Double
+                                                                                                in floor $ 100 * cos k)
+
+
+inputGenF :: (forall a. Arrays a => Acc a -> a) -> Int -> Int -> IO (Vector Int)
+inputGenF run _ m = 
+    return . run $ generate (index1 (constant m)) (\(unlift .unindex1->j :: Exp Int) -> let k = A.fromIntegral j :: Exp Double
+                                                                                                in floor $ 100 * cos k)
 -- quickSortVec :: Acc (Matrix Int) -> Acc (Matrix Int)
 -- quickSortVec = collect . tabulate . mapSeq (afst . quicksort) . toSeq2ndInner
 
@@ -80,7 +90,7 @@ indexTrans sh | Just Refl <- eqT :: Maybe (sh :~: DIM0)
               , I5 a b c d e<- sh = I5 e d c b a
               | Just Refl <- eqT :: Maybe (sh :~: DIM6)
               , I6 a b c d e f <- sh = I6 f e d c b a
-              
+
 quickSortNor :: Acc (Matrix Int) -> Acc (Matrix Int)
 quickSortNor xss = result
     where
@@ -275,6 +285,7 @@ tester =
         gpubenchesNor name reg f = benches'' GPU.run1 normbench name reg f
 
         gpubenchesFlat name reg f = env (myenvFlat reg 1 readFilesV flatbench GPU.run1 f) (benches' name flatbench)
+        gpubenchesFlatGen name reg f = env (myenvFlat reg 1 (inputGenF GPU.run) flatbench GPU.run1 f) (benches' name flatbench)
 #endif
     in [bgroup "CPU" [
                 -- cpubenches "Regular"   (Just True)  quickSortVec
@@ -289,6 +300,7 @@ tester =
                 -- , gpubenches "Irregular" (Just False) quickSortVec
                   gpubenchesNor "Normal"    Nothing quickSortNor
                 , gpubenchesFlat "Flat"    Nothing (afst. quicksort)
+                , gpubenchesFlatGen "FlatGen"    Nothing (afst. quicksort)
                 ]
 #endif
             ]
