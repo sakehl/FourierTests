@@ -82,16 +82,18 @@ step (A.T2 values headFlags) = A.T2 values' headFlags'
     -- Mark new section starts at:
     -- * the position of the pivot
     -- * the position of the pivot + 1
-    f :: Int -> A.Exp Bool -> A.Exp Int -> A.Exp Int -> A.Exp A.DIM1
-    f inc headF start countSmall =
-      headF A.? (A.index1 $ start + countSmall + A.constant inc, A.ignore)
-    writes :: Int -> A.Acc (A.Vector A.DIM1)
-    writes inc = A.zipWith3 (f inc) headFlags startIndex countSmaller
 
     headFlags' =
-        -- Note that (writes 1) may go out of bounds of the values array.
-        -- We made the headFlags array one larger, such that this gives no problems.
-        writeFlags (writes 0) $ writeFlags (writes 1) headFlags
+      let
+        f idx' flag = flag A.|| isPivot A.|| previousIsPivot
+          where
+            idx = A.unindex1 idx'
+            isPivot         = idx A.< A.length values
+                            A.&& pivots A.!! idx A.== values' A.!! idx
+            previousIsPivot = idx A.> 0
+                            A.&& pivots A.!! (idx - 1) A.== values' A.!! (idx - 1)
+      in
+        A.imap f headFlags
 
 -- Checks whether all segments have length 1. If that is the case, then the loop may terminate.
 condition :: A.Acc State -> A.Acc (A.Scalar Bool)
