@@ -7,6 +7,7 @@ import Data.Array.Accelerate                              as A hiding (fromInteg
 import qualified Data.Array.Accelerate                    as A (fromInteger, fromRational, fromIntegral)
 
 import Data.Array.Accelerate.LLVM.Native                  as CPU
+import Data.Array.Accelerate.LLVM.PTX                     as PTX
 import Data.Array.Accelerate.Interpreter                  as I
 
 import qualified Prelude as P
@@ -20,7 +21,10 @@ import Criterion.Main
 
 main :: IO ()
 main = do
+    PTX.registerPinnedAllocator
     defaultMain [bgroup "Fourier" FourierTest.tester, bgroup "QuickSort" QuickSortTest.tester]
+    -- fileTest1 1000000
+    -- fileTest 100 1000
     -- fileTest 1 1000
     -- fileTest 10 1000
     -- fileTest 100 1000

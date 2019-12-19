@@ -116,16 +116,16 @@ readFilesV _ m = readArrayFile ("Futhark/list_" P.++ P.show m P.++ "_" P.++ P.sh
 fileTest :: Int -> Int -> IO Int
 fileTest n m = do
     inp <- readFiles n m
-    P.putStrLn "Evaluating input"
+--     P.putStrLn "Evaluating input"
     
-#ifdef ACCELERATE_LLVM_PTX_BACKEND
-    P.putStrLn "GPU"
-    let inprunner = GPU.run1 $ map (+1)
-#else
-    P.putStrLn "CPU"
-    let inprunner = CPU.run1 $ map (+1)
-#endif
-    P.print $ indexArray (inprunner inp) (Z:.0:.0)
+-- #ifdef ACCELERATE_LLVM_PTX_BACKEND
+--     P.putStrLn "GPU"
+--     let inprunner = GPU.run1 $ map (+1)
+-- #else
+--     P.putStrLn "CPU"
+--     let inprunner = CPU.run1 $ map (+1)
+-- #endif
+--     P.print $ indexArray (inprunner inp) (Z:.0:.0)
 
     P.putStrLn ("Chunks of " P.++ P.show n)
     setEnv "ACCELERATE_FLAGS" ("-chunk-size=" P.++ P.show n)
@@ -141,9 +141,27 @@ fileTest n m = do
     -- time_ (evaluate (runner $ inputN 2)) >>= (\x -> P.putStrLn ("Small testrun took " P.++ x))
 
     time_ (evaluate (runner inp)) >>= (\x -> P.putStrLn ("Execution took " P.++ x))
-    time_ (evaluate (runner inp)) >>= (\x -> P.putStrLn ("Execution2 took " P.++ x))
+    -- time_ (evaluate (runner inp)) >>= (\x -> P.putStrLn ("Execution2 took " P.++ x))
     -- time_ (evaluate (runner inp)) >>= (\x -> P.putStrLn ("Execution3 took " P.++ x))
-    return (indexArray (runner inp) (Z:.0:.0) )
+    -- return (indexArray (runner inp) (Z:.0:.0) )
+    return 0
+
+fileTest1 :: Int -> IO Int
+fileTest1 m = do
+    inp <- readFilesV 1 m
+
+#ifdef ACCELERATE_LLVM_PTX_BACKEND
+    let runner = GPU.run1 (afst. quicksort)
+#else
+    let runner = CPU.run1 (afst. quicksort)
+#endif
+
+    P.putStrLn "Compiling function"
+    time_ (evaluate runner) >>= (\x -> P.putStrLn ("Compiling took " P.++ x))
+
+    time_ (evaluate (runner inp)) >>= (\x -> P.putStrLn ("Execution took " P.++ x))
+    -- return (indexArray (runner inp) (Z:.0) )
+    return 0
 
 myenv :: (a ~ Array sh e, Shape sh, Elt e, e ~Int)
       => Maybe Bool -> Int
@@ -247,7 +265,7 @@ tester =
         gpunums2 = (1,100,1000     ,5000,10000,20000)
 
         normbench = [1,100,1000]
-        flatbench = ( 100,1000,2000,5000,10000,20000)
+        flatbench = (100,100,100,100,100,1000000)
         
         cpubenches name n reg f = env (myenv reg n readFiles cpunums2 CPU.run1 f) (benches' (name P.++ "/" P.++ P.show n) cpunums2)
         -- cpubenches name reg f = benches'' CPU.run1 cpunums1 name reg f

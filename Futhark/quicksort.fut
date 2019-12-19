@@ -10,8 +10,20 @@
 -- input  @ list_10000_1.in
 -- input  @ list_20000_1.in
 
--- Single lists
+-- Single lists 1000000
 -- /==
+-- entry: quicksort1
+-- input  @ list_1000000_1.in
+-- output @ list_1000000_1.out
+
+-- Single lists 20000
+-- /==
+-- entry: quicksort1
+-- input  @ list_20000_1.in
+-- output @ list_20000_1.out
+
+-- Single lists
+-- ==
 -- entry: quicksort1
 -- input  @ list_100_1.in
 -- output @ list_100_1.out
@@ -25,9 +37,11 @@
 -- output @ list_10000_1.out
 -- input  @ list_20000_1.in
 -- output @ list_20000_1.out
+-- input  @ list_1000000_1.in
+-- output @ list_1000000_1.out
 
 -- lists of 1000
--- == 
+-- !== 
 -- input  @ list_1000_100.in
 
 -- lists of 1000
@@ -87,7 +101,7 @@
 
 
 
-type int = i64
+type int = i32
 
 let undef : int = 0
 let undefi32 : i32 = 0
