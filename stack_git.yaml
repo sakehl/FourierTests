@@ -18,20 +18,20 @@ packages:
 #- ../accelerate-llvm/accelerate-llvm-ptx
 - .
 # - ../accelerate-llvm/accelerate-llvm
-# - ../accelerate-llvm/accelerate-llvm-ptx
+- ../accelerate-llvm/accelerate-llvm-ptx
 # - ../accelerate
 
 # Dependency packages to be pulled from upstream that are not in the resolver
 extra-deps:
-- git:    https://github.com/ivogabe/accelerate.git
-  commit: 17d06cbd18140922bedfdd0c253c21c6df493aab
+- git:    https://github.com/sakehl/accelerate.git
+  commit: 84bad5907160643854a0f0fb89819fed87155863
 
-- git:    https://github.com/sakehl/accelerate-llvm.git
-  commit: 68cfb873fce62b4ef0710506db598afd6cc9478e
+- git:    https://github.com/ivogabe/accelerate-llvm.git
+  commit: 5a415886eafba3a90c7591f455a67a3b5544477e
   subdirs:
     - accelerate-llvm
     - accelerate-llvm-native
-    - accelerate-llvm-ptx 
+    # - accelerate-llvm-ptx 
 
 
 - git:    https://github.com/sakehl/accelerate-fft.git

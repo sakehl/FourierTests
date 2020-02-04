@@ -6,7 +6,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators       #-}
 {-# LANGUAGE ViewPatterns        #-}
-{-# language FlexibleInstances, MultiParamTypeClasses   #-}
+{-# language FlexibleInstances, MultiParamTypeClasses, GADTs   #-}
 -- |
 -- Module      : Data.Array.Accelerate.Math.FFT.Adhoc
 -- Copyright   : [2017] Henning Thielemann
@@ -22,7 +22,7 @@
 -- package contains other more sophisticated algorithms as well.
 --
 
-module FFTAdhoc ( fft, ditSplitRadixLoop, FFTAdhoc.fft2D, fft2DV)
+module FFTAdhoc ( fft, ditSplitRadixLoop, FFTAdhoc.fft2D, FFTAdhoc.fft1D, fft2DV, genericFft, fftFuthark2D)
   where
 
 import Data.Array.Accelerate                                        hiding ( transpose )
@@ -51,6 +51,18 @@ instance (Slice sh, Elt a, Elt b, Elt b', Slice (sh :. b), Slice (sh :. b'))
             (\s b -> let sh :. _ :. a = unlift s :: Exp sh :. Exp b :. Exp a in lift (sh :. b :. a))
 -}
 
+fft1D :: (Numeric e)
+    => Mode
+    -> Acc (Array DIM2 (Complex e))
+    -> Acc (Array DIM2 (Complex e))
+fft1D mode arr =
+  let
+    scale = fromIntegral (size arr)
+    go    = ditSplitRadixLoop mode
+  in case mode of
+      Inverse -> map (/scale) (go arr)
+      _       -> go arr
+
 fft2D :: (Numeric e)
     => Mode
     -> Acc (Array DIM2 (Complex e))
@@ -71,6 +83,7 @@ fft2DV mode arr =
   let
     scale = fromIntegral (shapeSize . indexTail . indexTrans . shape $ arr)
     go    = transpose . ditSplitRadixLoop mode >-> transpose . ditSplitRadixLoop mode
+    -- go = ditSplitRadixLoop mode
   in case mode of
       Inverse -> map (/scale) (go arr)
       _       -> go arr
@@ -129,12 +142,14 @@ ditSplitRadixLoop mode arr =
   let
       twiddleSR (fromIntegral -> n4) k (fromIntegral -> j) =
         let w = pi * k * j / (2*n4)
+        -- in lift (exp w :+ w)
         in  lift (cos w :+ signOfMode mode * sin w)
       
       --Twidles with same len4, generate same shaped arrays
       twiddle len4 k =
         generate (index1 len4) (twiddleSR len4 k . indexHead)
       -- So step stays regular
+      step :: Acc (Array (sh:.Int:.Int) (Complex e), Array (sh:.Int:.Int) (Complex e)) -> Acc (Array (sh:.Int:.Int) (Complex e), Array (sh:.Int:.Int) (Complex e))
       step (unlift -> (us,zs)) =
         let
             --k is same, since dependent on shape
@@ -145,6 +160,7 @@ ditSplitRadixLoop mode arr =
             tw3         = twiddle k 3
             --
             im          = lift (makeExp 0 :+ signOfMode mode) 
+            -- twidZeven  = reshape (shape zs) tw1 --zipWithExtrude1 (*) tw1 zs
             twidZeven   = zipWithExtrude1 (*) tw1 (sieveV 2 0 zs) --sieveV gives regular shape
             twidZodd    = zipWithExtrude1 (*) tw3 (sieveV 2 1 zs) -- since input is reguar, zipwithExtrude1 is aswell
             zsum        = zipWith (+) twidZeven twidZodd          -- input regular, thus also output
@@ -176,6 +192,7 @@ ditSplitRadixLoop mode arr =
                  )
   in
   --headV also stays regular, so result is regular
+  -- arr
   headV
     $ afst
     -- step stay regular, and since check function is fully determined on the shape, it will stay regular
@@ -686,3 +703,103 @@ signOfMode m
       Forward   -> -1
       Reverse   ->  1
       Inverse   ->  1
+
+
+radix :: Exp Int
+radix = 2
+
+type C e = Acc (Vector (Complex e))
+
+fftIteration :: (Numeric e, Elt e, Shape sh, Slice sh) => Exp e -> Exp Int -> Acc (Array (sh :. Int) (Complex e)) 
+             -> Acc (Vector Int) -> Acc (Array (sh :. Int) (Int, Complex e, Int, Complex e))
+fftIteration forward ns dat js = 
+  let n = indexHead . shape $ dat
+      sh = indexTail . shape $ dat
+      newsh = lift $ sh :. (indexHead . shape $ js)
+      --
+      angle j = -2.0 * forward * pi * fromIntegral (j `mod` ns) / fromIntegral (ns * radix)
+      angles = backpermute newsh (index1 . indexHead) $ map angle js
+      
+      -- (v0 , v1) = unzip $ map (\j -> lift (dat !! j, dat !! (j+n `div` radix) * lift (cos angle :+ sin angle))) js
+      dats is = backpermute newsh
+                  (\x -> let n' = indexHead x
+                             sh' = indexTail x
+                         in lift (sh' :. (is !! n'))) dat
+      -- v0 = map (\j -> dat !! j) js
+      v0 = dats js
+      v1 = zipWith (\xs angle -> xs * lift (cos angle :+ sin angle)) (dats (map (\j -> j+n `div` radix) js)) angles
+      -- v1 = zipWith (\j angle -> dat !! (j+n `div` radix) * lift (cos angle :+ sin angle)) js angles
+      v00 = zipWith (+) v0 v1
+      v11 = zipWith (-) v0 v1
+      idxD = map (\j -> (j `div` ns) * ns * radix + (j `mod` ns)) js
+      idxDs = backpermute newsh (index1 . indexHead) idxD
+  in zip4 idxDs v00 (map (+ ns) idxDs) v11
+
+iota :: Exp Int -> Acc (Vector Int)
+iota i = generate (index1 i) indexHead
+
+{-# NOINLINE[1] afst3 #-}
+afst3 :: forall a b c. (Arrays a, Arrays b, Arrays c) => Acc (a, b, c) -> Acc a
+afst3 a = let (x, _::Acc b, _::Acc c) = unlift a in x
+
+asnd3 :: forall a b c. (Arrays a, Arrays b, Arrays c) => Acc (a, b, c) -> Acc b
+asnd3 a = let (_::Acc a, x, _::Acc c) = unlift a in x
+
+athd3 :: forall a b c. (Arrays a, Arrays b, Arrays c) => Acc (a, b, c) -> Acc c
+athd3 a = let (_::Acc a, _::Acc b, x) = unlift a in x
+
+tup3 :: forall a b c. (Arrays a, Arrays b, Arrays c) => Acc a -> Acc b -> Acc c -> Acc (a,b,c)
+tup3 a b c = lift (a,b,c)
+
+
+-- | Ported from: https://github.com/diku-dk/fft/blob/master/lib/github.com/diku-dk/fft/stockham-radix-2.fut
+fft' :: (Numeric e, Elt e) => Exp e -> Acc (Matrix (Complex e)) -> Exp Int -> Acc (Matrix (Complex e))
+fft' forward input bits =
+  let n = indexHead . shape $ input
+      ix = iota (n `div` 2)
+      nss = map (radix ^) (iota bits)
+      initial = tup3 input input nss
+      pred tup = unit (size (athd3 tup) > 0)
+      iterate tup = let ns = athd3 tup !! 0
+                        nss' = drop 1 (athd3 tup)
+                        input' = afst3 tup
+                        output' = asnd3 tup
+                        (i0s, v0s, i1s, v1s) = unzip4 $ fftIteration forward ns input' ix
+                        newoutput = scatterMD (i0s ++ i1s) output' (v0s ++ v1s)
+                    in tup3 newoutput input' nss'
+      res = afst3 $ awhile pred iterate initial
+      -- res = afst3 $ iterate initial
+  in res
+
+scatterMD
+    :: forall sh e.  (Elt e, Shape sh, Slice sh)
+    => Acc (Array (sh :. Int) Int)           -- ^ destination indices to scatter into
+    -> Acc (Array (sh :. Int) e)             -- ^ default values
+    -> Acc (Array (sh :. Int) e)             -- ^ source values
+    -> Acc (Array (sh :. Int) e)
+scatterMD to defaults input = permute const defaults pf input'
+  where
+    pf i       = let iy :. ix :: (Exp sh :. Exp Int) = unlift i in lift (iy :. (to ! lift (iy :. ix)))
+    input'      = backpermute (shape to `intersect` shape input) P.id input
+
+genericFft :: (Numeric e, Elt e) => Mode -> Acc (Matrix (Complex e)) -> Acc (Matrix (Complex e))
+genericFft forward dat =
+  let n = indexHead . shape $ dat
+      n' = fromIntegral n :: Exp Double
+      bits = floor $ logBase 2 n'
+      forward' = case forward of
+        Forward -> 1
+        _       -> -1
+  in fft' forward' dat bits
+
+fftFuthark2D :: (Numeric e)
+    => Mode
+    -> Acc (Array DIM2 (Complex e))
+    -> Acc (Array DIM2 (Complex e))
+fftFuthark2D mode arr =
+  let
+    scale = fromIntegral (size arr)
+    go    = transpose . genericFft mode >-> transpose . genericFft mode
+  in case mode of
+      Inverse -> map (/scale) (go arr)
+      _       -> go arr

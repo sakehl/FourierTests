@@ -1,15 +1,14 @@
+-- Fourier test
+-- ==
+-- entry: fouriertest
+-- input  @ list_32_32_100.in
+-- input  @ list_32_32_1000.in
+-- input  @ list_32_32_5000.in
+-- input  @ list_32_32_10000.in
+-- input  @ list_32_32_20000.in
 
-
--- Single lists
--- /==
--- input  @ list_100_1.in
--- input  @ list_1000_1.in
--- input  @ list_2000_1.in
--- input  @ list_5000_1.in
--- input  @ list_10000_1.in
--- input  @ list_20000_1.in
-
-import "complex"
+-- import "complex"
+import "lib/github.com/diku-dk/complex/complex"
 import "futlib/math"
 
 type e = f64
@@ -91,7 +90,7 @@ let get2D 't [n] (_ : [][n][] t) : i32 = n
 
 let dropV 't (n : i32) (xs : [][][] t) : [][][] t = map (drop n) xs
 
-let ditSplitRadixLoop  [sh] [n] (mode : mode) (arr : [sh][n] c) : [][] c =
+let ditSplitRadixLoop  [sh] [n] (mode : mode) (arr : [sh][n] c) : [sh][n] c =
   let twiddleSR n4 k j =
     let w = pi * k * (fromInt j) / (2* (fromInt n4))
     in complex.mk (cos w) (signOfMode mode * sin w)
@@ -142,31 +141,36 @@ let ditSplitRadixLoop  [sh] [n] (mode : mode) (arr : [sh][n] c) : [][] c =
 
 entry fft2D [n] [m] (mode : mode) (arr : [n][m] c) : [n][m] c =
   let scale = complex.mk_re <-< fromInt <| n*m
-  let fft' a = transpose  <-< ditSplitRadixLoop mode
+  let fft' a = unsafe (transpose  <-< ditSplitRadixLoop mode
                <-< transpose  <-< ditSplitRadixLoop mode
-               <| a
+               <| a)
   let go = fft'
   in match mode
        case #Inverse -> map (map (complex./ scale)) (go arr)
        case _        -> go arr
   
-entry fft1D [n] [m] (mode : mode) (arr : [n][m] c) : [n][m] c =
+entry fft1DV [n] [m] (mode : mode) (arr : [n][m] c) : [n][m] c = 
   let scale = complex.mk_re <-< fromInt <| m
-  let fft' a = ditSplitRadixLoop mode
-               <| a
+  let fft' a = unsafe (ditSplitRadixLoop mode
+               <| a)
   let go = fft'
   in match mode
        case #Inverse -> map (map (complex./ scale)) (go arr)
        case _        -> go arr
 
-entry test (n: i32) : [n][n] c = tabulate_2d n n (\x y -> complex.mk_re <| fromInt (x + y))
-entry test2 (n: i32) : [][] e = map (map (\(x,_) -> x)) <| test n
+-- entry test (n: i32) : [n][n] c = tabulate_2d n n (\x y -> complex.mk_re <| fromInt (x + y))
+-- entry test2 (n: i32) : [][] e = map (map (\(x,_) -> x)) <| test n
 
-let main [n] [m] (input : [n][m] c) : [][] c = unsafe (fft1D #Forward input)
-entry main2d [n] [m] (input : [n][m] c) : [][] c = unsafe (fft2D #Forward input)
+let main [n] [m] (input : [n][m] c) : [][] c = unsafe (fft2D #Forward input)
+-- entry main2d [n] [m] (input : [n][m] c) : [][] c = unsafe (fft2D #Forward input)
 
-entry main_n (n: i32) : [n][n] e = let (res) = (main <| test n) in map (map (\(x,_) -> x)) <| res
-entry mainy_n (n: i32) : [n][n] e = let (res) = (main <| test n) in map (map  (\(_,y) -> y)) <| res
+-- entry main_n (n: i32) : [n][n] e = let (res) = (main <| test n) in map (map (\(x,_) -> x)) <| res
+-- entry mainy_n (n: i32) : [n][n] e = let (res) = (main <| test n) in map (map  (\(_,y) -> y)) <| res
 
-entry main2d_n (n: i32) : [n][n] e = let (res) = (main2d <| test n) in map (map (\(x,_) -> x)) <| res
-entry main2dy_n (n: i32) : [n][n] e = let (res) = (main2d <| test n) in map (map  (\(_,y) -> y)) <| res
+-- entry main2d_n (n: i32) : [n][n] e = let (res) = (main2d <| test n) in map (map (\(x,_) -> x)) <| res
+-- entry main2dy_n (n: i32) : [n][n] e = let (res) = (main2d <| test n) in map (map  (\(_,y) -> y)) <| res
+
+entry fouriertest [n][m][k] (input : [n][m][k] e) : [n][m][k] e = 
+  let input' = map (map (map (\x -> (x,x)))) <| input
+  let res = (map (fft2D #Forward)) <| input'
+  in map (map (map (\(x,_) -> x))) <| res

@@ -82,6 +82,9 @@ inputNAcc (the -> n) = compute $ generate (index3 n 32 32) (\sh -> let x = A.fro
 input :: Matrix (Complex Double)
 input = fromList (Z :. 32 :. 32) [ (P.sin x :+ P.cos x) | x <- [0..] ]
 
+input' :: Int -> Matrix (Complex Double)
+input' n = fromList (Z :. 2 P.^ n :. 2 P.^ n) [ (P.sin x :+ P.cos x) | x <- [0..] ]
+
 -- gpuTest :: Int -> MatrixVec (Complex Double)
 -- gpuTest n = GPU.run1 (collect . tabulate . mapSeq (PTX.fft2DForGPU Forward) . toSeqOuter) (inputN n)
 
@@ -115,6 +118,27 @@ gpuTest3 n = let
     fft2 = fourierTransformSelfLift dat
   in zipWith (-) fft1 fft2
 
+gpuTest4 :: Int -> Acc (Matrix (Complex Double))
+gpuTest4 n = let
+    dat = use (input' n)
+    fft1 = genericFft Forward dat
+    fft2 = FFTAdhoc.fft1D Forward dat
+--   in fft1
+--   in fft2
+  in zipWith (-) fft1 fft2
+
+gpuTest5 :: Int -> Acc (MatrixVec (Complex Double))
+gpuTest5 n = let
+    n' = unit . lift $ n
+    dat = inputNAcc n'
+    fft1 = fourierTransformSelfLiftFor dat
+    fft2 = fourierFuthark dat
+  in zipWith (-) fft1 fft2
+--    in fft2
+
+fourierFuthark :: Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double))
+fourierFuthark = collect . tabulate . mapSeq (fftFuthark2D Forward) . toSeqOuter
+
 fourierTransformSeq :: Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double))
 fourierTransformSeq = collect . tabulate . mapSeq (FFTAdhoc.fft2D Forward) . toSeqOuter
 
@@ -147,8 +171,9 @@ fourierTransformNor xss = result
         step n a = 
             let slix = lift (Z:.n:.All:.All)
                 theslice = slice xss slix
+                -- ditSplitRadixLoop _ xs = xs
 
-                transform = ditSplitRadixLoop Forward theslice
+                transform = A.transpose . ditSplitRadixLoop Forward >-> A.transpose . ditSplitRadixLoop Forward $  theslice
                 reshaped = reshape onesh transform
 
                 res = concatOn _3 a reshaped
@@ -215,11 +240,15 @@ myenv reg (a,b,c,d,e,f) run1_ fun = do
 myenv2 :: Maybe Bool -> Int
        -> (forall a b. (Arrays a, Arrays b) => (Acc a -> Acc b) -> a -> b)
        -> (Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double)))
-       -> IO (Scalar Int, Scalar Int -> MatrixVec (Complex Double))
+       -> IO (MatrixVec (Complex Double), MatrixVec (Complex Double) -> MatrixVec (Complex Double))
 myenv2 reg a run1_ fun = do
-    let inpa = fromList Z [a]
-        -- inpa = inputN a
-        runner = run1_ (fun . inputNAcc)
+    let -- inpa = fromList Z [a]
+        inpa = (run1_ inputNAcc) (fromList Z [a])
+        runner = run1_ fun
+
+    P.putStrLn "Evaluating input"
+    evaluate (rnf inpa)
+        
     
     
     P.putStrLn "Compiling function"
@@ -294,15 +323,19 @@ tester =
         cpunums1 = [1,100,1000,2000,5000,10000]
         gpunums1 = [1,100,1000,     5000,10000,20000]
         normbench = [1,100,1000]
-        -- cpunums2 = (1,100,1000,2000,5000,10000)
-        -- gpunums2 = (1,100,1000     ,5000,10000,20000)
-        -- cpubenches name reg f = env (myenv3 reg cpunums2 CPU.run1 f) (benches' name cpunums2)
-        -- cpubenchesNor name reg f = env (myenv3 reg cpunums2 CPU.run1 f) (benchesNor' name cpunums2)
+        cpunums2 = (1,100,1000,2000,5000,10000)
+        gpunums2 = (1,100,1000     ,5000,10000,20000)
+
+        --
+        -- cpubenches name reg f = env (myenv reg cpunums2 CPU.run1 f) (benches' name cpunums2)
+        -- cpubenchesNor name reg f = env (myenv reg cpunums2 CPU.run1 f) (benchesNor' name cpunums2)
         cpubenches name reg f = benches'' CPU.run1 cpunums1 name reg f
         cpubenchesNor name reg f = benches'' CPU.run1 normbench name reg f
 #ifdef ACCELERATE_LLVM_PTX_BACKEND
-        -- gpubenches name reg f = env (myenv3 reg gpunums2 GPU.run1 f) (benches' name gpunums2)
-        -- gpubenchesNor name reg f = env (myenv3 reg gpunums2 GPU.run1 f) (benchesNor' name gpunums2)
+        
+        --
+        -- gpubenches name reg f = env (myenv reg gpunums2 GPU.run1 f) (benches' name gpunums2)
+        -- gpubenchesNor name reg f = env (myenv reg gpunums2 GPU.run1 f) (benchesNor' name gpunums2)
         gpubenches name reg f = benches'' GPU.run1 gpunums1 name reg f
         gpubenchesNor name reg f = benches'' GPU.run1 normbench name reg f
 #endif
@@ -312,6 +345,8 @@ tester =
                 , cpubenches "Foreign"   Nothing fourierTransformFor
                 , cpubenches "Lifted"   Nothing fourierTransformSelfLift
                 , cpubenches "LiftedForeign"   Nothing fourierTransformSelfLiftFor
+                , cpubenches "FutharkReg"   (Just True)  fourierFuthark
+                , cpubenches "FutharkIrreg"   (Just False)  fourierFuthark
                 , cpubenchesNor "Normal"    Nothing fourierTransformNor
                 ]
 #ifdef ACCELERATE_LLVM_PTX_BACKEND
@@ -322,6 +357,8 @@ tester =
                 , gpubenches "Foreign"   Nothing fourierTransformForGPU
                 , gpubenches "Lifted"   Nothing fourierTransformSelfLift
                 , gpubenches "LiftedForeign"   Nothing fourierTransformSelfLiftFor
+                , gpubenchesNor "FutharkReg"   (Just True)  fourierFuthark
+                , gpubenchesNor "FutharkIrreg"   (Just False)  fourierFuthark
                 , gpubenchesNor "Normal"    Nothing fourierTransformNor
                 ]
 #endif
