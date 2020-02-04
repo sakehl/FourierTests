@@ -107,12 +107,6 @@ time_ a = do t1 <- getSystemTime
              t2 <- getSystemTime
              return $ P.show (diffUTCTime (systemToUTCTime t2) (systemToUTCTime t1) )
 
-readFiles :: Int -> Int -> IO (Matrix Int)
-readFiles n m = readArrayFile ("Futhark/list_" P.++ P.show m P.++ "_" P.++ P.show n P.++ ".in") (Z:.n:.m)
-
-readFilesV :: Int -> Int -> IO (Vector Int)
-readFilesV _ m = readArrayFile ("Futhark/list_" P.++ P.show m P.++ "_" P.++ P.show 1 P.++ ".in") (Z:.m)
-
 fileTest :: Int -> Int -> IO Int
 fileTest n m = do
     inp <- readFiles n m
