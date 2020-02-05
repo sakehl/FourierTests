@@ -14,21 +14,25 @@ readFiles n m = readArrayFile ("Futhark/list_" ++ show m ++ "_" ++ show n ++ ".i
 readFilesV :: Int -> Int -> IO (A.Vector Int)
 readFilesV _ m = readArrayFile ("Futhark/list_" ++ show m ++ "_" ++ show 1 ++ ".in") (A.Z A.:. m)
 
-readFilesFourier :: Int -> Int -> IO (A.Array A.DIM3 (A.Complex Double))
+readFilesFourier :: Int -> Int -> IO (A.Array A.DIM3 Double)
 readFilesFourier n m = readArrayFileD ("Futhark/list_" ++ show m ++ "_" ++ show m ++ "_" ++ show n ++ ".in") (A.Z A.:. n A.:. m A.:. m)
+
+readFilesFourier' :: Int -> Int -> IO (A.Array A.DIM3 (A.Complex Double))
+readFilesFourier' n m = readArrayFileD' ("Futhark/list_" ++ show m ++ "_" ++ show m ++ "_" ++ show n ++ ".in") (A.Z A.:. n A.:. m A.:. m)
 
 readArrayFile :: (A.Shape sh) => String -> sh -> IO (A.Array sh Int)
 readArrayFile f sh = do
-    -- [f] <- getArgs
     s   <- L.readFile f
-    -- let s = L.pack "[12, 3]"
     return . A.fromVectors sh . parse $ s
 
-readArrayFileD :: (A.Shape sh) => String -> sh -> IO (A.Array sh (A.Complex Double))
+readArrayFileD :: (A.Shape sh) => String -> sh -> IO (A.Array sh Double)
 readArrayFileD f sh = do
-    -- [f] <- getArgs
     s   <- L.readFile f
-    -- let s = L.pack "[12, 3]"
+    return . A.fromVectors sh . parse2 $ s
+
+readArrayFileD' :: (A.Shape sh) => String -> sh -> IO (A.Array sh (A.Complex Double))
+readArrayFileD' f sh = do
+    s   <- L.readFile f
     
     let v = parse2 s
         n = U.length v

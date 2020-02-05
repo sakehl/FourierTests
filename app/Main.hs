@@ -23,7 +23,7 @@ import QuickSort
 import ReadFile
 import System.Environment
 
-main = main2
+main = main3
 
 -- Run the full benchmark suite
 main1 :: IO ()
@@ -70,24 +70,27 @@ main3 :: IO ()
 main3 = do
     -- setforceIrreg
     args <- getArgs
-    if P.length args P.== 1 then do
-        let m = P.read $ P.head args
-        let fourier    = PTX.run1 fourierTransformSelfLift
-        -- let fourier = PTX.run1 fourierTransformSeq
-        -- let fourier = PTX.run1 fourierTransformSelfLiftFor
+    if P.length args P.== 2 then do
+        let version    = P.head args
+        let m = P.read $ args P.!! 1
+        let fourierv   = P.lookup version fourierVersions
 
-        fourier `P.seq` return ()
-
-        input <- readFilesFourier m 32
-
-        P.replicateM_ 100 (runTest fourier (return input))
+        case fourierv of
+            Nothing -> P.putStrLn $ "Fourier version '" P.++ version P.++ "' doesn't exists."
+            Just f  -> do
+                P.when (version P.== "Irregular") setforceIrreg
+                let fourier    = PTX.run1 $ reals f
+                fourier `P.seq` return ()
+                input <- readFilesFourier m 32
+                --
+                P.replicateM_ 10 (runTest fourier (readFilesFourier m 32))
     else
-        P.putStrLn "Expected one arguments (stack run -- m)"
+        P.putStrLn "Expected two arguments (stack run -- fourierversion m)"
 
 {-# NOINLINE runTest #-}
 runTest :: (a -> b) -> IO a -> IO ()
 runTest f arg = do
-    P.putStrLn "Running test"
+    -- P.putStrLn "Running test"
     arg' <- arg
     f arg' `P.seq` return ()
 

@@ -136,6 +136,21 @@ gpuTest5 n = let
   in zipWith (-) fft1 fft2
 --    in fft2
 
+reals :: (Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double))) -> Acc (MatrixVec Double) -> Acc (MatrixVec Double)
+reals f x = let x' = map (lift . (:+ 0) ) x
+                y  = f x'
+                y' = map real y
+            in y'
+
+fourierVersions :: [(P.String, Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double)))]
+fourierVersions = [ ("FFTFuthark", fourierFuthark)
+                  , ("Regular", fourierTransformSeq)
+                  , ("Irregular", fourierTransformSeq)
+                  , ("Lifted", fourierTransformSelfLift)
+                  , ("cuFFT", fourierTransformSelfLiftFor)
+                  , ("Normal", fourierTransformNor)
+                  ]
+
 fourierFuthark :: Acc (MatrixVec (Complex Double)) -> Acc (MatrixVec (Complex Double))
 fourierFuthark = collect . tabulate . mapSeq (fftFuthark2D Forward) . toSeqOuter
 
