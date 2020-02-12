@@ -85,6 +85,9 @@ input = fromList (Z :. 32 :. 32) [ (P.sin x :+ P.cos x) | x <- [0..] ]
 input' :: Int -> Matrix (Complex Double)
 input' n = fromList (Z :. 2 P.^ n :. 2 P.^ n) [ (P.sin x :+ P.cos x) | x <- [0..] ]
 
+input'' :: Int -> Matrix (Complex Float)
+input'' n = fromList (Z :. 2 P.^ n :. 2 P.^ n) [ (P.sin x :+ P.cos x) | x <- [0..] ]
+
 -- gpuTest :: Int -> MatrixVec (Complex Double)
 -- gpuTest n = GPU.run1 (collect . tabulate . mapSeq (PTX.fft2DForGPU Forward) . toSeqOuter) (inputN n)
 
@@ -118,14 +121,14 @@ gpuTest3 n = let
     fft2 = fourierTransformSelfLift dat
   in zipWith (-) fft1 fft2
 
-gpuTest4 :: Int -> Acc (Matrix (Complex Double))
+gpuTest4 :: Int -> Acc (Matrix (Complex Float))
 gpuTest4 n = let
-    dat = use (input' n)
+    dat = use (input'' n)
     fft1 = genericFft Forward dat
     fft2 = FFTAdhoc.fft1D Forward dat
---   in fft1
+  in fft1
 --   in fft2
-  in zipWith (-) fft1 fft2
+--   in zipWith (-) fft1 fft2
 
 gpuTest5 :: Int -> Acc (MatrixVec (Complex Double))
 gpuTest5 n = let
@@ -372,8 +375,8 @@ tester =
                 , gpubenches "Foreign"   Nothing fourierTransformForGPU
                 , gpubenches "Lifted"   Nothing fourierTransformSelfLift
                 , gpubenches "LiftedForeign"   Nothing fourierTransformSelfLiftFor
-                , gpubenchesNor "FutharkReg"   (Just True)  fourierFuthark
-                , gpubenchesNor "FutharkIrreg"   (Just False)  fourierFuthark
+                , gpubenches "FutharkReg"   (Just True)  fourierFuthark
+                , gpubenches "FutharkIrreg"   (Just False)  fourierFuthark
                 , gpubenchesNor "Normal"    Nothing fourierTransformNor
                 ]
 #endif

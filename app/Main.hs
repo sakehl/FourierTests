@@ -53,18 +53,18 @@ main2 = do
 
         input <- readFiles n m
 
-        P.replicateM_ 10 (runTest qsort (return input))
+        P.replicateM_ 10 (runTest qsort (readFiles n m))
     else
         P.putStrLn "Expected two (or one) arguments (stack run -- m n)"
 
 
--- Runs a single fourier benchmark 100 times.
+-- Runs a single fourier benchmark 10 times.
 -- Uncomment `setforceIrreg` to not perform the regularity analysis
 -- Can be profiled with:
--- nvprof --profile-child-processes -u ms --trace gpu --continuous-sampling-interval 1 stack run -- m n
+-- nvprof --profile-child-processes -u ms --trace gpu --continuous-sampling-interval 1 stack run -- NameOfBench m
 --
 -- The futhark version can be benchmarked with:
--- nvprof --profile-child-processes -u ms --trace gpu --continuous-sampling-interval 1 ../../futhark bench -r 99 --skip-compilation --backend=cuda fft-lib.fut
+-- FUTHARK_INCREMENTAL_FLATTENING=1 nvprof --profile-child-processes -u ms --trace gpu --continuous-sampling-interval 1 futhark bench -r 9 --skip-compilation --backend=cuda fft-lib.fut
 -- Sum of 10 runs, so divide by 10
 main3 :: IO ()
 main3 = do
@@ -90,7 +90,7 @@ main3 = do
 {-# NOINLINE runTest #-}
 runTest :: (a -> b) -> IO a -> IO ()
 runTest f arg = do
-    -- P.putStrLn "Running test"
+    P.putStrLn "Running test"
     arg' <- arg
     f arg' `P.seq` return ()
 

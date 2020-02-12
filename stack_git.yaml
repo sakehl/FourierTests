@@ -26,8 +26,8 @@ extra-deps:
 - git:    https://github.com/sakehl/accelerate.git
   commit: 84bad5907160643854a0f0fb89819fed87155863
 
-- git:    https://github.com/ivogabe/accelerate-llvm.git
-  commit: 5a415886eafba3a90c7591f455a67a3b5544477e
+- git:    https://github.com/sakehl/accelerate-llvm.git
+  commit: 33df45b418729b102c163504e1aaf1f72477728e
   subdirs:
     - accelerate-llvm
     - accelerate-llvm-native

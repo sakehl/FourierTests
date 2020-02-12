@@ -8,37 +8,23 @@ date=$(date '+%Y_%m_%d')
 # run="time stack run --verbosity silent -- --output results"
 . init.sh
 #GPU stuff
-for i in "Foreign" "Regular" "Irregular" "Lifted" "LiftedForeign"
+#"FFTFuthark"
+#for i in "Regular" "Lifted" "cuFFT" "Irregular" FFTFuthark
+for i in "FFTFuthark"
 do
   for j in "1" "100" "1000" "5000" "10000" "20000"
   do
-    time stack run --verbosity silent -- --output results/GPU_bench_$date\_$i\_$j.html --csv results/$date.csv "GPU/$i/$j" -m "glob"
+    nvprof --profile-child-processes -u ms --trace gpu --continuous-sampling-interval 1 stack --verbosity silent run -- $i $j | tee -a results/$date
   done
 done
 
-# CPU stuff
-for i in "Regular" "Irregular" "Foreign" "Lifted" "LiftedForeign"
-do
-  for j in "1" "100" "1000" "2000" "5000" "10000"
-  do
-    time stack run --verbosity silent -- --output results/CPU_bench_$date\_$i\_$j.html --csv results/$date.csv "CPU/$i/$j" -m "glob"
-  done
-done
-
-#Normal stuff
-for i in "Normal"
-do
-  for j in "1" "100" "1000"
-  do
-    time stack run --verbosity silent -- --output results/CPU_bench_$date\_$i\_$j.html --csv results/$date.csv "CPU/$i/$j" -m "glob"
-  done
-done
+exit 1
 
 #Normal stuff GPU
 for i in "Normal"
 do
   for j in "1" "100" "1000"
   do
-    time stack run --verbosity silent -- --output results/GPU_bench_$date\_$i\_$j.html --csv results/$date.csv "GPU/$i/$j" -m "glob"
+    nvprof --profile-child-processes -u ms --trace gpu --continuous-sampling-interval 1 stack --verbosity silent run -- $i $j | tee -a results/$date
   done
 done

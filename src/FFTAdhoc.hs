@@ -705,13 +705,16 @@ signOfMode m
       Inverse   ->  1
 
 
-radix :: Exp Int
+type TheInt = Int
+
+radix :: Exp TheInt
 radix = 2
 
 type C e = Acc (Vector (Complex e))
 
-fftIteration :: (Numeric e, Elt e, Shape sh, Slice sh) => Exp e -> Exp Int -> Acc (Array (sh :. Int) (Complex e)) 
-             -> Acc (Vector Int) -> Acc (Array (sh :. Int) (Int, Complex e, Int, Complex e))
+
+fftIteration :: forall e sh . (Numeric e, Elt e, Shape sh, Slice sh) => Exp e -> Exp TheInt -> Acc (Array (sh :. Int) (Complex e)) 
+             -> Acc (Vector TheInt) -> Acc (Array (sh :. Int) (TheInt, Complex e, TheInt, Complex e))
 fftIteration forward ns dat js = 
   let n = indexHead . shape $ dat
       sh = indexTail . shape $ dat
@@ -724,10 +727,10 @@ fftIteration forward ns dat js =
       dats is = backpermute newsh
                   (\x -> let n' = indexHead x
                              sh' = indexTail x
-                         in lift (sh' :. (is !! n'))) dat
+                         in lift (sh' :. (fromIntegral $ is !! n'))) dat
       -- v0 = map (\j -> dat !! j) js
       v0 = dats js
-      v1 = zipWith (\xs angle -> xs * lift (cos angle :+ sin angle)) (dats (map (\j -> j+n `div` radix) js)) angles
+      v1 = zipWith (\xs angle -> xs * lift (cos angle :+ sin angle)) (dats (map (\j -> j+ fromIntegral n `div` radix) js)) angles
       -- v1 = zipWith (\j angle -> dat !! (j+n `div` radix) * lift (cos angle :+ sin angle)) js angles
       v00 = zipWith (+) v0 v1
       v11 = zipWith (-) v0 v1
@@ -735,8 +738,8 @@ fftIteration forward ns dat js =
       idxDs = backpermute newsh (index1 . indexHead) idxD
   in zip4 idxDs v00 (map (+ ns) idxDs) v11
 
-iota :: Exp Int -> Acc (Vector Int)
-iota i = generate (index1 i) indexHead
+iota :: Exp TheInt -> Acc (Vector TheInt)
+iota i = generate (index1 (fromIntegral i)) (fromIntegral . indexHead)
 
 {-# NOINLINE[1] afst3 #-}
 afst3 :: forall a b c. (Arrays a, Arrays b, Arrays c) => Acc (a, b, c) -> Acc a
@@ -753,9 +756,9 @@ tup3 a b c = lift (a,b,c)
 
 
 -- | Ported from: https://github.com/diku-dk/fft/blob/master/lib/github.com/diku-dk/fft/stockham-radix-2.fut
-fft' :: (Numeric e, Elt e) => Exp e -> Acc (Matrix (Complex e)) -> Exp Int -> Acc (Matrix (Complex e))
+fft' :: (Numeric e, Elt e) => Exp e -> Acc (Matrix (Complex e)) -> Exp TheInt -> Acc (Matrix (Complex e))
 fft' forward input bits =
-  let n = indexHead . shape $ input
+  let n = fromIntegral . indexHead . shape $ input
       ix = iota (n `div` 2)
       nss = map (radix ^) (iota bits)
       initial = tup3 input input nss
@@ -773,14 +776,14 @@ fft' forward input bits =
 
 scatterMD
     :: forall sh e.  (Elt e, Shape sh, Slice sh)
-    => Acc (Array (sh :. Int) Int)           -- ^ destination indices to scatter into
+    => Acc (Array (sh :. Int) TheInt)        -- ^ destination indices to scatter into
     -> Acc (Array (sh :. Int) e)             -- ^ default values
     -> Acc (Array (sh :. Int) e)             -- ^ source values
     -> Acc (Array (sh :. Int) e)
 scatterMD to defaults input = permute const defaults pf input'
   where
-    pf i       = let iy :. ix :: (Exp sh :. Exp Int) = unlift i in lift (iy :. (to ! lift (iy :. ix)))
-    input'      = backpermute (shape to `intersect` shape input) P.id input
+    pf i       = let iy :. ix :: (Exp sh :. Exp Int) = unlift i in lift (iy :. fromIntegral (to ! lift (iy :. ix)))
+    input'      = input -- backpermute (shape to `intersect` shape input) P.id input
 
 genericFft :: (Numeric e, Elt e) => Mode -> Acc (Matrix (Complex e)) -> Acc (Matrix (Complex e))
 genericFft forward dat =

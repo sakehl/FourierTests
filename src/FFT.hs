@@ -62,7 +62,7 @@ data NumericR a where
   NumericRfloat32 :: NumericR Float
   NumericRfloat64 :: NumericR Double
 
-class (RealFloat a, FromIntegral Int a, Elt (Complex a)) => Numeric a where
+class (RealFloat a, FromIntegral Int a, FromIntegral Int32 a, Elt (Complex a)) => Numeric a where
   numericR :: NumericR a
 
 instance Numeric Float where
