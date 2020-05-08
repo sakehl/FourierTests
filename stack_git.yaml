@@ -18,7 +18,7 @@ packages:
 #- ../accelerate-llvm/accelerate-llvm-ptx
 - .
 # - ../accelerate-llvm/accelerate-llvm
-- ../accelerate-llvm/accelerate-llvm-ptx
+# - ../accelerate-llvm/accelerate-llvm-ptx
 # - ../accelerate
 
 # Dependency packages to be pulled from upstream that are not in the resolver
@@ -31,7 +31,7 @@ extra-deps:
   subdirs:
     - accelerate-llvm
     - accelerate-llvm-native
-    # - accelerate-llvm-ptx 
+    - accelerate-llvm-ptx 
 
 
 - git:    https://github.com/sakehl/accelerate-fft.git
