@@ -21,3 +21,7 @@ Futhark/lib
 *.in
 
 *.out
+
+Futhark/quicksort
+
+Futhark/quicksort.c

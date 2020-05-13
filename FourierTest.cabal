@@ -14,14 +14,10 @@ build-type: Simple
 extra-source-files:
     README.md
     ChangeLog.md
-    cubits/twine_f32.ptx
-    cubits/twine_f64.ptx
-    cubits/twine_f32.cu
-    cubits/twine_f64.cu
 
 flag llvm-ptx
   Description:          Use the GPU backend (llvm-ptx)
-  Default:              False
+  Default:              True
 
 source-repository head
     type: git
@@ -29,15 +25,11 @@ source-repository head
 
 library
     exposed-modules:
-        Lib
         FourierTest
-        FFT
         FFTAdhoc
         QuickSort
         QuickSortTest
         ReadFile
-    c-sources:
-        c++/multi.cpp
     hs-source-dirs: src
     other-modules:
         Paths_FourierTest
@@ -71,8 +63,6 @@ library
             cufft,
             bytestring,
             file-embed
-        exposed-modules:
-            GPUFFT
 
 executable FourierTest-exe
     main-is: Main.hs

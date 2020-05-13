@@ -1,35 +1,23 @@
 module Main where
 
-import FourierTest
-import QuickSortTest
-
 import Data.Array.Accelerate                              as A hiding (fromInteger, fromRational, fromIntegral)
 import qualified Data.Array.Accelerate                    as A (fromInteger, fromRational, fromIntegral)
+import Data.Array.Accelerate.Debug as D
 
 import Data.Array.Accelerate.LLVM.Native                  as CPU
 import Data.Array.Accelerate.LLVM.PTX                     as PTX
-import Data.Array.Accelerate.Interpreter                  as I
 
 import qualified Prelude as P
 import qualified Control.Monad as P
 import Prelude as P (fromIntegral, fromInteger, fromRational, String, return, (>>=), (>>), IO, Maybe(..), maybe)
 
-import Debug.Trace
-import Data.Array.Accelerate.Debug as D
-
-import Criterion.Main
-
-import QuickSort
-import ReadFile
 import System.Environment
 
-main = main3
+import FourierTest
+import QuickSortTest
+import ReadFile
 
--- Run the full benchmark suite
-main1 :: IO ()
-main1 = do
-    PTX.registerPinnedAllocator
-    defaultMain [bgroup "Fourier" FourierTest.tester, bgroup "QuickSort" QuickSortTest.tester]
+main = main3
 
 -- Runs a single quicksort benchmark 10 times.
 -- Uncomment `setforceIrreg` to not perform the regularity analysis

@@ -9,16 +9,10 @@ import qualified Data.Vector.Storable       as U
 import System.Environment
 
 readFiles :: Int -> Int -> IO (A.Matrix Int)
-readFiles n m = readArrayFile ("Futhark/list_" ++ show m ++ "_" ++ show n ++ ".in") (A.Z A.:. n A.:. m)
-
-readFilesV :: Int -> Int -> IO (A.Vector Int)
-readFilesV _ m = readArrayFile ("Futhark/list_" ++ show m ++ "_" ++ show 1 ++ ".in") (A.Z A.:. m)
+readFiles n m = readArrayFile ("data/list_" ++ show m ++ "_" ++ show n ++ ".in") (A.Z A.:. n A.:. m)
 
 readFilesFourier :: Int -> Int -> IO (A.Array A.DIM3 Double)
-readFilesFourier n m = readArrayFileD ("Futhark/list_" ++ show m ++ "_" ++ show m ++ "_" ++ show n ++ ".in") (A.Z A.:. n A.:. m A.:. m)
-
-readFilesFourier' :: Int -> Int -> IO (A.Array A.DIM3 (A.Complex Double))
-readFilesFourier' n m = readArrayFileD' ("Futhark/list_" ++ show m ++ "_" ++ show m ++ "_" ++ show n ++ ".in") (A.Z A.:. n A.:. m A.:. m)
+readFilesFourier n m = readArrayFileD ("data/list_" ++ show m ++ "_" ++ show m ++ "_" ++ show n ++ ".in") (A.Z A.:. n A.:. m A.:. m)
 
 readArrayFile :: (A.Shape sh) => String -> sh -> IO (A.Array sh Int)
 readArrayFile f sh = do
@@ -29,15 +23,6 @@ readArrayFileD :: (A.Shape sh) => String -> sh -> IO (A.Array sh Double)
 readArrayFileD f sh = do
     s   <- L.readFile f
     return . A.fromVectors sh . parse2 $ s
-
-readArrayFileD' :: (A.Shape sh) => String -> sh -> IO (A.Array sh (A.Complex Double))
-readArrayFileD' f sh = do
-    s   <- L.readFile f
-    
-    let v = parse2 s
-        n = U.length v
-        zs = U.replicate n 0
-    return . A.fromVectors sh $ (((),v),zs)
 
 -- Fill a new vector from a file containing a list of numbers.
 parse = U.unfoldr step
