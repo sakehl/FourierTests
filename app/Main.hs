@@ -35,11 +35,11 @@ main = do
         let algorithm = P.head args
         if algorithm P.== "fourier" then do
             let version = args P.!! 1
-            let m = P.read $ args P.!! 2
+            let n = P.read $ args P.!! 2
             P.when (version P.== "Irregular") setforceIrreg
-            mainFourier version m
+            mainFourier version n
         else
-            P.putStrLn "Expected fourier if we have three arguments (stack run -- fourier version m)"
+            P.putStrLn "Expected fourier if we have three arguments (stack run -- fourier version n)"
 
     else if P.length args P.== 4 then do
         let algorithm = P.head args
@@ -52,7 +52,7 @@ main = do
         else
             P.putStrLn "Expected quicksort if we have three arguments (stack run -- quicksort version m n)"
     else
-        P.putStrLn "Expected three or 4 arguments ('stack run -- quicksort m n' or 'stack run -- fourier version m')"
+        P.putStrLn "Expected three or 4 arguments ('stack run -- quicksort m n' or 'stack run -- fourier version n')"
 
 -- Runs a single quicksort benchmark 10 times.
 mainQuicksort :: String -> Int -> Int -> IO ()
@@ -62,16 +62,16 @@ mainQuicksort version m n =
         
         qsort `P.seq` return ()
 
-        input <- readFiles n m
+        input <- readFiles m n
 
-        P.replicateM_ 10 (runTest qsort (readFiles n m))
+        P.replicateM_ 10 (runTest qsort (readFiles m n))
     else
         P.putStrLn $ "Quicksort version '" P.++ version P.++ "' doesn't exists."
 
 
 -- Runs a single fourier benchmark 10 times.
 mainFourier :: String -> Int -> IO ()
-mainFourier version m = do
+mainFourier version n = do
     let fourierv   = P.lookup version fourierVersions
 
     case fourierv of
@@ -79,9 +79,9 @@ mainFourier version m = do
         Just f  -> do
             let fourier    = PTX.run1 $ reals f
             fourier `P.seq` return ()
-            input <- readFilesFourier m 32
+            input <- readFilesFourier 32 n
             --
-            P.replicateM_ 10 (runTest fourier (readFilesFourier m 32))
+            P.replicateM_ 10 (runTest fourier (readFilesFourier 32 n))
 
 {-# NOINLINE runTest #-}
 runTest :: (a -> b) -> IO a -> IO ()

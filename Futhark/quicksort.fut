@@ -1,103 +1,32 @@
-
-
--- Single lists
--- /==
--- entry: quicksort1
--- input  @ list_100_1.in
--- input  @ list_1000_1.in
--- input  @ list_2000_1.in
--- input  @ list_5000_1.in
--- input  @ list_10000_1.in
--- input  @ list_20000_1.in
-
--- Single lists 1000000
--- /==
--- entry: quicksort1
--- input  @ list_1000000_1.in
--- output @ list_1000000_1.out
-
--- Single lists 20000
--- /==
--- entry: quicksort1
--- input  @ list_20000_1.in
--- output @ list_20000_1.out
-
--- Single lists
+-- Quicksort test 100 1
 -- ==
--- entry: quicksort1
--- input  @ list_100_1.in
--- output @ list_100_1.out
--- input  @ list_1000_1.in
--- output @ list_1000_1.out
--- input  @ list_2000_1.in
--- output @ list_2000_1.out
--- input  @ list_5000_1.in
--- output @ list_5000_1.out
--- input  @ list_10000_1.in
--- output @ list_10000_1.out
--- input  @ list_20000_1.in
--- output @ list_20000_1.out
--- input  @ list_1000000_1.in
--- output @ list_1000000_1.out
+-- tags { n100 n1000 n2000 n5000 n10000 m1000 m10000}
+-- input  @ ../data/list_100_1.in
 
--- lists of 1000
--- !== 
--- input  @ list_1000_100.in
+-- Quicksort test 100 100
+-- ==
+-- tags n1 n1000 n2000 n5000 n10000 m1000 m10000
+-- input  @ ../data/list_100_100.in
 
--- lists of 1000
--- !== 
--- input  @ list_1000_1.in
--- input  @ list_1000_100.in
--- input  @ list_1000_1000.in
--- input  @ list_1000_2000.in
--- input  @ list_1000_5000.in
--- input  @ list_1000_10000.in
+-- Quicksort test 100 1000
+-- ==
+-- tags n1 n100 n2000 n5000 n10000 m1000 m10000
+-- input  @ ../data/list_100_1000.in
 
--- lists of 1000
--- /== 
--- input  @ list_1000_1000.in
--- output @ list_1000_1000.out
--- input  @ list_1000_1.in
--- output @ list_1000_1.out
--- input  @ list_1000_100.in
--- output @ list_1000_100.out
--- input  @ list_1000_1000.in
--- output @ list_1000_1000.out
--- input  @ list_1000_2000.in
--- output @ list_1000_2000.out
--- input  @ list_1000_5000.in
--- output @ list_1000_5000.out
--- input  @ list_1000_10000.in
--- output @ list_1000_10000.out
+-- Quicksort test 100 2000
+-- ==
+-- tags n1 n100 n1000 n5000 n10000 m1000 m10000
+-- input  @ ../data/list_100_2000.in
 
--- /==
--- input  @ list_100_1.in
--- input  @ list_100_100.in
--- input  @ list_100_1000.in
--- input  @ list_100_2000.in
--- input  @ list_100_5000.in
--- input  @ list_100_10000.in
+-- Quicksort test 100 5000
+-- ==
+-- tags n1 n100 n1000 n2000 n10000 m1000 m10000
+-- input  @ ../data/list_100_5000.in
 
--- !==
--- input  @ list_100_1.in
--- output @ list_100_1.out
--- input  @ list_100_100.in
--- output @ list_100_100.out
--- input  @ list_100_1000.in
--- output @ list_100_1000.out
--- input  @ list_100_2000.in
--- output @ list_100_2000.out
--- input  @ list_100_5000.in
--- output @ list_100_5000.out
--- input  @ list_100_10000.in
--- output @ list_100_10000.out
-
--- Hi
--- !==
--- entry: main2
--- input { 1000 }
--- input { 10000 }
--- input { 1 }
+-- Quicksort test 100 10000
+-- ==
+-- tags n1 n100 n1000 n2000 n5000 m1000 m10000
+-- input  @ ../data/list_100_10000.in
 
 
 

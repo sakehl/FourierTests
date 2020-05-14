@@ -9,10 +9,10 @@ import qualified Data.Vector.Storable       as U
 import System.Environment
 
 readFiles :: Int -> Int -> IO (A.Matrix Int)
-readFiles n m = readArrayFile ("data/list_" ++ show m ++ "_" ++ show n ++ ".in") (A.Z A.:. n A.:. m)
+readFiles m n = readArrayFile ("data/list_" ++ show m ++ "_" ++ show n ++ ".in") (A.Z A.:. n A.:. m)
 
 readFilesFourier :: Int -> Int -> IO (A.Array A.DIM3 Double)
-readFilesFourier n m = readArrayFileD ("data/list_" ++ show m ++ "_" ++ show m ++ "_" ++ show n ++ ".in") (A.Z A.:. n A.:. m A.:. m)
+readFilesFourier m n = readArrayFileD ("data/list_" ++ show m ++ "_" ++ show m ++ "_" ++ show n ++ ".in") (A.Z A.:. n A.:. m A.:. m)
 
 readArrayFile :: (A.Shape sh) => String -> sh -> IO (A.Array sh Int)
 readArrayFile f sh = do
