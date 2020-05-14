@@ -1,13 +1,10 @@
 #!/bin/bash
 
-cd data
 echo "Making the input data"
 for n in "1" "100" # "1000" "5000" "10000" "20000"
 do
 	python3 input_gen.py 32 32 $n
 done
-
-cd ..
 
 for v in "cuFFT" "Regular"
 do
