@@ -1,30 +1,36 @@
 -- Quicksort test 100 1
 -- ==
+-- entry: main
 -- tags n100 n1000 n2000 n5000 n10000 m1000 m10000
 -- input  @ ../data/list_100_1.in
 
 -- Quicksort test 100 100
 -- ==
+-- entry: main
 -- tags n1 n1000 n2000 n5000 n10000 m1000 m10000
 -- input  @ ../data/list_100_100.in
 
 -- Quicksort test 100 1000
 -- ==
+-- entry: main
 -- tags n1 n100 n2000 n5000 n10000 m1000 m10000
 -- input  @ ../data/list_100_1000.in
 
 -- Quicksort test 100 2000
 -- ==
+-- entry: main
 -- tags n1 n100 n1000 n5000 n10000 m1000 m10000
 -- input  @ ../data/list_100_2000.in
 
 -- Quicksort test 100 5000
 -- ==
+-- entry: main
 -- tags n1 n100 n1000 n2000 n10000 m1000 m10000
 -- input  @ ../data/list_100_5000.in
 
 -- Quicksort test 100 10000
 -- ==
+-- entry: main
 -- tags n1 n100 n1000 n2000 n5000 m1000 m10000
 -- input  @ ../data/list_100_10000.in
 
@@ -32,31 +38,37 @@
 
 -- Quicksort test 1000 1
 -- ==
+-- entry: main
 -- tags n100 n1000 n2000 n5000 n10000 m100 m10000
 -- input  @ ../data/list_1000_1.in
 
 -- Quicksort test 1000 100
 -- ==
+-- entry: main
 -- tags n1 n1000 n2000 n5000 n10000 m100 m10000
 -- input  @ ../data/list_1000_100.in
 
 -- Quicksort test 1000 1000
 -- ==
+-- entry: main
 -- tags n1 n100 n2000 n5000 n10000 m100 m10000
 -- input  @ ../data/list_1000_1000.in
 
 -- Quicksort test 1000 2000
 -- ==
+-- entry: main
 -- tags n1 n100 n1000 n5000 n10000 m100 m10000
 -- input  @ ../data/list_1000_2000.in
 
 -- Quicksort test 1000 5000
 -- ==
+-- entry: main
 -- tags n1 n100 n1000 n2000 n10000 m100 m10000
 -- input  @ ../data/list_1000_5000.in
 
 -- Quicksort test 1000 10000
 -- ==
+-- entry: main
 -- tags n1 n100 n1000 n2000 n5000 m100 m10000
 -- input  @ ../data/list_1000_10000.in
 
@@ -64,31 +76,37 @@
 
 -- Quicksort test 10000 1
 -- ==
+-- entry: main
 -- tags n100 n1000 n2000 n5000 n10000 m100 m10000
 -- input  @ ../data/list_10000_1.in
 
 -- Quicksort test 10000 100
 -- ==
+-- entry: main
 -- tags n1 n1000 n2000 n5000 n10000 m100 m1000
 -- input  @ ../data/list_10000_100.in
 
 -- Quicksort test 10000 1000
 -- ==
+-- entry: main
 -- tags n1 n100 n2000 n5000 n10000 m100 m1000
 -- input  @ ../data/list_10000_1000.in
 
 -- Quicksort test 10000 2000
 -- ==
+-- entry: main
 -- tags n1 n100 n1000 n5000 n10000 m100 m1000
 -- input  @ ../data/list_10000_2000.in
 
 -- Quicksort test 10000 5000
 -- ==
+-- entry: main
 -- tags n1 n100 n1000 n2000 n10000 m100 m1000
 -- input  @ ../data/list_10000_5000.in
 
 -- Quicksort test 10000 10000
 -- ==
+-- entry: main
 -- tags n1 n100 n1000 n2000 n5000 m100 m1000
 -- input  @ ../data/list_10000_10000.in
 
@@ -181,7 +199,7 @@ let step [n] (values :[n] int ,headFlags :[] bool) : ([n] int, [] bool) =
     (writeFlags (writes 1) (copy headFlags))
   in (values', headFlags')
 
-let condition (( :[] int ,headFlags :[] bool)) : bool =
+let condition ((_ :[] int ,headFlags :[] bool)) : bool =
   ! (and headFlags)
 
 let quicksort [n] (input : [n] int) : [n] int =
