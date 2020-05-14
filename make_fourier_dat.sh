@@ -6,23 +6,15 @@ do
 	python3 input_gen.py 32 32 $n
 done
 
-for v in "cuFFT" "Regular"
+for v in "cuFFT" "Regular" "Irregular"
 do
 	echo "Running Accelerate benchmarks for $v"
 	for n in "1" "100" #"1000" "5000" "10000" "20000"
 	do
 		echo "n=$n"
-		nvprof --csv -f -u ms --trace gpu --log-file data/result_fourier_$v\_$n.csv stack run $v $n
+		nvprof --csv -f -u ms --trace gpu --log-file data/result_fourier_$v\_$n.csv stack run fourier $v $n
 	done
 done
-
-# for v in "Irregular"
-# do
-# 	for n in "1" "100" "1000" "5000" "10000" "20000"
-# 	do
-# 		nvprof --csv -f -u ms --trace gpu --log-file data/result_fourier_$v\_$n.csv stack run --irregular $v $n
-# 	done
-# done
 
 for v in "Futhark"
 do
@@ -47,7 +39,7 @@ do
 	for n in "1" "100" #"1000"
 	do
 		echo "n=$n"
-		nvprof --csv -f -u ms --trace gpu --continuous-sampling-interval 1 --log-file data/result_fourier_$v\_$n.csv stack run $v $n
+		nvprof --csv -f -u ms --trace gpu --continuous-sampling-interval 1 --log-file data/result_fourier_$v\_$n.csv stack run fourier $v $n
 	done
 done
 
