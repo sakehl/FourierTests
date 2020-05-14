@@ -1,6 +1,6 @@
 -- Quicksort test 100 1
 -- ==
--- tags { n100 n1000 n2000 n5000 n10000 m1000 m10000}
+-- tags n100 n1000 n2000 n5000 n10000 m1000 m10000
 -- input  @ ../data/list_100_1.in
 
 -- Quicksort test 100 100
@@ -32,7 +32,7 @@
 
 -- Quicksort test 1000 1
 -- ==
--- tags { n100 n1000 n2000 n5000 n10000 m100 m10000}
+-- tags n100 n1000 n2000 n5000 n10000 m100 m10000
 -- input  @ ../data/list_1000_1.in
 
 -- Quicksort test 1000 100
@@ -64,7 +64,7 @@
 
 -- Quicksort test 10000 1
 -- ==
--- tags { n100 n1000 n2000 n5000 n10000 m100 m10000}
+-- tags n100 n1000 n2000 n5000 n10000 m100 m10000
 -- input  @ ../data/list_10000_1.in
 
 -- Quicksort test 10000 100
