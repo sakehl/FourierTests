@@ -1,12 +1,4 @@
-{-# LANGUAGE CPP                 #-}
-{-# LANGUAGE BangPatterns        #-}
-{-# LANGUAGE GADTs               #-}
-{-# LANGUAGE PatternGuards       #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TemplateHaskell     #-}
-{-# LANGUAGE TypeFamilies        #-}
-{-# LANGUAGE TypeOperators       #-}
-{-# language FlexibleContexts    #-}
 {-# language ViewPatterns        #-}
 {-# language RankNTypes        #-}
 
@@ -19,26 +11,7 @@ import Data.Array.Accelerate                                        as A hiding 
 import qualified Data.Array.Accelerate                              as A (fromInteger, fromRational, fromIntegral)
 import qualified Data.Array.Accelerate.Pattern as A
 
-import Data.Array.Accelerate.LLVM.Native                            as CPU
-import Data.Array.Accelerate.Interpreter                            as I
-#ifdef ACCELERATE_LLVM_PTX_BACKEND
-import qualified Data.Array.Accelerate.LLVM.PTX                     as GPU
-#endif
-import Data.Array.Accelerate.Debug hiding (Mode)
-import qualified Data.Array.Accelerate.Array.Sugar                  as S
-
-import Control.Lens hiding (use)
-import Control.DeepSeq
-import Control.Exception
-import Data.Time.Clock.System
-import Data.Time.Clock
-import System.Environment
-
-
-import Criterion.Main
-
 import QuickSort
-import ReadFile
 
 isSort :: Vector Int -> Bool
 isSort xs = isSortedBy (P.<=) . toList $ xs 

@@ -1,12 +1,4 @@
-{-# LANGUAGE CPP                 #-}
-{-# LANGUAGE BangPatterns        #-}
-{-# LANGUAGE GADTs               #-}
-{-# LANGUAGE PatternGuards       #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TemplateHaskell     #-}
-{-# LANGUAGE TypeFamilies        #-}
-{-# LANGUAGE TypeOperators       #-}
-{-# language FlexibleContexts    #-}
 {-# language ViewPatterns        #-}
 {-# language RankNTypes        #-}
 
@@ -22,8 +14,6 @@ import Data.Array.Accelerate.Data.Complex                           as A
 import Data.Array.Accelerate.Math.FFT                   as FFT
 import Control.Lens hiding (use)
 
--- import FFT
--- import GPUFFT
 import FFTAdhoc
 
 

@@ -1,27 +1,38 @@
--- Fourier test
+-- Fourier test 1
 -- ==
 -- entry: fouriertest
--- input  @ list_32_32_10000.in
+-- tags 100 1000 5000 10000 20000
+-- input  @ ../data/list_32_32_1.in
 
--- input  @ list_32_32_1.in
--- input  @ list_32_32_100.in
--- input  @ list_32_32_1000.in
--- input  @ list_32_32_5000.in
--- input  @ list_32_32_10000.in
--- input  @ list_32_32_20000.in
-
--- Incr Flattening
--- =/=
+-- Fourier test 100
+-- ==
 -- entry: fouriertest
--- input  @ list_32_32_10.in
--- input  @ list_64_32_10.in
--- input  @ list_128_32_10.in
--- input  @ list_512_32_10.in
--- input  @ list_1024_32_10.in
--- input  @ list_2048_32_10.in
--- input  @ list_5096_32_10.in
--- input  @ list_10192_32_10.in
+-- tags 1 1000 5000 10000 20000
+-- input  @ ../data/list_32_32_100.in
 
+-- Fourier test 1000
+-- ==
+-- entry: fouriertest
+-- tags 1 100 5000 10000 20000
+-- input  @ ../data/list_32_32_1000.in
+
+-- Fourier test 5000
+-- ==
+-- entry: fouriertest
+-- tags 1 100 1000 10000 20000
+-- input  @ ../data/list_32_32_5000.in
+
+-- Fourier test 10000
+-- ==
+-- entry: fouriertest
+-- tags 1 100 1000 5000 20000
+-- input  @ ../data/list_32_32_10000.in
+
+-- Fourier test 20000
+-- ==
+-- entry: fouriertest
+-- tags 1 100 1000 5000 10000 
+-- input  @ ../data/list_32_32_20000.in
 
 import "lib/github.com/diku-dk/fft/stockham-radix-2"
 
