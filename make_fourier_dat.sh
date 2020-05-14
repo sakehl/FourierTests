@@ -55,6 +55,6 @@ do
 	done
 done
 
-python3 process_csv.py
+python3 process_csv.py fourier
 
 gnuplot fourier32x32.gnuplot

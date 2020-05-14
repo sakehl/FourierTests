@@ -1,10 +1,10 @@
 #!/bin/bash
 
 
-#nums_m=("100" "1000" "10000")
-nums_m=("100")
-#nums_n=("1" "100" "1000" "2000" "5000" "10000")
-nums_n=("1")
+nums_m=("100" "1000" "10000")
+#nums_m=("100")
+nums_n=("1" "100" "1000" "2000" "5000" "10000")
+#nums_n=("1")
 
 
 function accelerate {
@@ -41,7 +41,7 @@ done
 
 for m in "${nums_m[@]}"
 do
-    for v in "Regular" # "Irregular"
+    for v in "Regular" "Irregular"
     do
 	    for n in "${nums_n[@]}"
         do
@@ -62,8 +62,11 @@ do
 	    do
 		    futharkbench $v $m $n
 	    done
+    done
 done
 
-#python3 process_csv.py
-
-#gnuplot fourier32x32.gnuplot
+for m in "${nums_m[@]}"
+do
+    python3 process_csv.py quicksort $m
+    gnuplot quicksort-$m.gnuplot
+done

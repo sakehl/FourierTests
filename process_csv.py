@@ -1,19 +1,24 @@
 #!/usr/bin/env python3
 
 import csv
+import sys
 #from colorama import Fore, Style
+from typing import Optional
 
-ns = [1, 100, 1000, 5000, 10000, 20000]
+ns = {"fourier": [1, 100, 1000, 5000, 10000, 20000], "quicksort" : [1, 100, 1000, 2000, 5000, 10000]}
 #ns = [1,100]
-versions = ["Regular", "cuFFT", "Irregular", "Normal", "Futhark"]
+versions = {"fourier": ["Regular", "cuFFT", "Irregular", "Normal", "Futhark"], "quicksort": ["Futhark", "Regular", "Irregular"]}
 
 
-def process_time(version: str, n: int) -> float:
+def process_time(algo: str, version: str, m: Optional[int], n: int) -> Optional[float]:
     perc = 0.0
     time = 0.0
 
     try:
-        fn = f'data/result_fourier_{version}_{n}.csv'
+        if algo == "fourier":
+            fn = f'data/result_{algo}_{version}_{n}.csv'
+        else:
+            fn = f'data/result_{algo}_{version}_{m}_{n}.csv'
         with open(fn) as csvfile:
             timings = csv.reader(csvfile)
             for row in timings:
@@ -33,31 +38,48 @@ def process_time(version: str, n: int) -> float:
         print(f"WARNING: file for {version} with {n} iterations not found")
         return None
 
-results = dict()
-for i in ns:
-    results[i] = dict()
-    for v in versions:
-        # We don't run normal above 1000, since it will take to long
-        if v == "Normal" and i > 1000:
-            results[i][v] = "DNF"
-        # Irregular was't working for 10000
-        elif v =="Irregular" and i == 10000:
-            results[i][v] = "DNF"
-        else:
-            t = process_time(v, i)
-            # Each experiment is ran exactly 10 times, so we take the average of 10 runs
-            if t == None:
+
+
+def make_dat_file(algo: str, m: Optional[int] = None):
+    results = dict()
+    for i in ns[algo]:
+        results[i] = dict()
+        for v in versions[algo]:
+            # We don't run normal above 1000, since it will take to long
+            if algo == "fourier" and v == "Normal" and i > 1000:
                 results[i][v] = "DNF"
             else:
-                results[i][v] = t / 10
+                t = process_time(algo,v, m, i)
+                # Each experiment is ran exactly 10 times, so we take the average of 10 runs
+                if t == None:
+                    results[i][v] = "DNF"
+                else:
+                    results[i][v] = t / 10
+    #Write output to be used in gnuplot
+    if algo == "fourier":
+        fn = "data/fourier32x32.dat"
+    else:
+        fn = f"data/quicksort-{m}.dat"
+    with open(fn,'w') as f:
+        if algo == "fourier":
+            f.write("# Arrays of size 32 x 32\n")
+        else:
+            f.write(f"# List of size {m}\n")
+        f.write("# n\t")
+        f.write('\t'.join(versions[algo]) + '\n')
+        for i in ns[algo]:
+            f.write(str(i) + "\t")
+            for v in versions[algo]:
+                f.write(str(results[i][v]) + "\t")
+            f.write("\n")
 
-#Write output to be used in gnuplot
-with open("data/fourier32x32.dat",'w') as f:
-    f.write("# Arrays of size 32 x 32\n")
-    f.write("# n\t")
-    f.write('\t'.join(versions) + '\n')
-    for i in ns:
-        f.write(str(i) + "\t")
-        for v in versions:
-            f.write(str(results[i][v]) + "\t")
-        f.write("\n")
+
+algorithm = sys.argv[1]
+if algorithm == "fourier":
+    make_dat_file(algorithm)
+elif algorithm == "quicksort":
+    m = int(sys.argv[2])
+    make_dat_file(algorithm, m)
+else:
+    print(f"Name '{algorithm}' is not recognized as an option to process'")
+
