@@ -44,7 +44,7 @@ let fill 't (n: i32) (x: t): [n]t =
 let scanr 't [n] (comb : t -> t -> t) (init : t) (xs : [n] t) : [] t =
   reverse <| scan (flip comb) init (reverse xs)
 
-type state = ([] int, [] bool)
+-- type state = ([] int, [] bool)
 
 let partitionPermuteIndex (isLarger : bool) (start : i32) 
       (indexIfSmaller : i32) (indexIfLarger : i32)
@@ -95,7 +95,7 @@ let postscanSegHead [n] (f : i32 -> i32 -> i32) (headFlags : [] bool)
 let writeFlags [m] [n] (writes : [m] i32) (flags : *[n] bool): [n] bool =
   scatter flags writes (fill m true)
 
-let step [n] ((values :[n] int ,headFlags) : state) : ([n] int, [] bool) = 
+let step [n] (values :[n] int ,headFlags :[] bool) : ([n] int, [] bool) = 
   let pivots = propagateSegmentHead undef headFlags values
   let isLarger = map2 (>=) values pivots
   let startIndex = propagateSegmentHead undefi32 headFlags (iota n)
@@ -117,7 +117,7 @@ let step [n] ((values :[n] int ,headFlags) : state) : ([n] int, [] bool) =
     (writeFlags (writes 1) (copy headFlags))
   in (values', headFlags')
 
-let condition ((_,headFlags) : state) : bool =
+let condition ((values :[] int ,headFlags :[] bool)) : bool =
   ! (and headFlags)
 
 let quicksort [n] (input : [n] int) : [n] int =
