@@ -117,7 +117,7 @@ let step [n] (values :[n] int ,headFlags :[] bool) : ([n] int, [] bool) =
     (writeFlags (writes 1) (copy headFlags))
   in (values', headFlags')
 
-let condition ((values :[] int ,headFlags :[] bool)) : bool =
+let condition ((_ :[] int ,headFlags :[] bool)) : bool =
   ! (and headFlags)
 
 let quicksort [n] (input : [n] int) : [n] int =
