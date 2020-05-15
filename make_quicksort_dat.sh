@@ -3,7 +3,7 @@
 
 nums_m=("100" "1000" "10000")
 nums_n=("1" "100" "1000" "2000" "5000" "10000")
-
+versions=("Regular" "Irregular")
 
 function accelerate {
     v=$1
@@ -28,35 +28,46 @@ function futharkbench {
 }
 
 noinput="UNSET"
-short="UNSET"
 onlyn="UNSET"
 onlym="UNSET"
+onlyfuthark="UNSET"
+accelerateversion="UNSET"
 while :; do
     case $1 in
 		--no-input) noinput="SET"            
         ;;
-        -s|--short) short="SET"
+        -s|--short)
+            nums_m=("100" "1000")
+            nums_n=("1" "100" "1000" "2000")
+		;;
+        -f|--futhark) onlyfuthark="SET"
+		;;
+        --regular) accelerateversion="Regular"
+            versions=("Regular")
+		;;
+        --irregular) accelerateversion="Irregular"
+            versions=("Irregular")
 		;;
         -n|--n)
             if [ "$2" ]; then
-                onlyn=$2
-                shift
                 re='^[0-9]+$'
-				if ! [[ $onlyn =~ $re ]] ; then
-				echo "error: $onlyn is Not a number" >&2; exit 1
+				if ! [[ $2 =~ $re ]] ; then
+				echo "error: $2 is Not a number" >&2; exit 1
 				fi
+                nums_n=($2)
+                shift
             else
                 die 'ERROR: "-n" requires a non-empty option argument.'
             fi
         ;;
         -m|--m)
             if [ "$2" ]; then
-                onlym=$2
-                shift
                 re='^[0-9]+$'
-				if ! [[ $onlym =~ $re ]] ; then
-				echo "error: $onlym is Not a number" >&2; exit 1
+				if ! [[ $2 =~ $re ]] ; then
+				echo "error: $2 is Not a number" >&2; exit 1
 				fi
+                nums_m=($2)
+                shift
             else
                 die 'ERROR: "-m" requires a non-empty option argument.'
             fi
@@ -65,22 +76,6 @@ while :; do
     esac
     shift
 done
-
-if [ $short = "SET" ]
-then
-nums_m=("100" "1000")
-nums_n=("1" "100" "1000" "2000")
-fi
-
-if [ $onlyn != "UNSET" ]
-then
-nums_n=($onlyn)
-fi
-
-if [ $onlym != "UNSET" ]
-then
-nums_m=($m)
-fi
 
 if [ $noinput != "SET" ]
 then
@@ -95,9 +90,14 @@ do
 done
 fi
 
+
+################################################# Actual tests
+
+if [ $onlyfuthark = "UNSET" ]
+then
 for m in "${nums_m[@]}"
 do
-    for v in "Regular" "Irregular"
+    for v in "${versions[@]}"
     do
 	    for n in "${nums_n[@]}"
         do
@@ -105,7 +105,10 @@ do
         done
 	done
 done
+fi
 
+if [ $accelerateversion = "UNSET" ]
+then
 echo "Running Futhark benchmarks"
 echo "Futhark says it does 9 runs, but actually it does one warmup run extra, which we do measure with nvprof"
 futhark cuda Futhark/quicksort.fut
@@ -120,6 +123,7 @@ do
 	    done
     done
 done
+fi
 
 for m in "${nums_m[@]}"
 do

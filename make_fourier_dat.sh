@@ -2,6 +2,7 @@
 
 nums=("1" "100" "1000" "5000" "10000" "20000")
 numsshort=("1" "100" "1000")
+versions=("cuFFT" "Regular" "Irregular")
 
 function accelerate {
     v=$1
@@ -24,11 +25,28 @@ function futharkbench {
 noinput="UNSET"
 short="UNSET"
 onlyn="UNSET"
+onlyfuthark="UNSET"
+accelerateversion="UNSET"
 while :; do
     case $1 in
 		--no-input) noinput="SET"            
         ;;
         -s|--short) short="SET"
+		;;
+		--futhark) onlyfuthark="SET"
+			versions=()
+		;;
+        --regular) accelerateversion="Regular"
+			versions=("Regular")
+		;;
+        --irregular) accelerateversion="Irregular"
+			versions=("Irregular")
+		;;
+		--cufft) accelerateversion="cuFFT"
+			versions=("cuFFT")
+		;;
+		--normal) accelerateversion="Normal"
+			versions=()
 		;;
 		-n|--n)
             if [ "$2" ]; then
@@ -55,7 +73,15 @@ fi
 if [ $onlyn != "UNSET" ]
 then
 nums=($onlyn)
+	if [ $onlyn -gt 1000 ]
+	then
+		numsshort=()
+	else
+		numsshort=($onlyn)
+	fi
 fi
+
+############################### ACTUAL TESTS
 
 if [ $noinput != "SET" ]
 then
@@ -67,14 +93,30 @@ do
 done
 fi
 
-for v in "cuFFT" "Regular" "Irregular"
+if [ $onlyfuthark = "UNSET" ]
+then
+for v in "${versions[@]}"
 do
 	for n in "${nums[@]}"
 	do
 		accelerate $v $n
 	done
 done
+fi
 
+if [ $onlyfuthark = "UNSET" ] && ([ $accelerateversion = "UNSET" ] || [ $accelerateversion = "Normal" ])
+then
+for v in "Normal"
+do
+	for n in "${numsshort[@]}"
+	do
+		accelerate $v $n
+	done
+done
+fi
+
+if [ $accelerateversion = "UNSET" ]
+then
 for v in "Futhark"
 do
 	echo "Running Futhark benchmarks"
@@ -85,14 +127,9 @@ do
 		futharkbench $v $n
 	done
 done
+fi
 
-for v in "Normal"
-do
-	for n in "${numsshort[@]}"
-	do
-		accelerate $v $n
-	done
-done
+exit 0
 
 python3 process_csv.py fourier
 
