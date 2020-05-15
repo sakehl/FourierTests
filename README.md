@@ -17,6 +17,7 @@ git clone --single-branch -b artifact \
 
 ### Installation
 Install the following
+
   * [Docker](https://docs.docker.com/install/)
   * [Nvidia's Docker runtime](https://github.com/NVIDIA/nvidia-docker#quickstart)
 
@@ -29,8 +30,8 @@ mkdir data
 ```
 Now do the following
 ```bash
-sudo docker run --gpus all -it --privileged \
---mount type=bind,source="$(pwd)"/data,target=/root/FourierTests/data \
+sudo docker run --gpus all -it --privileged --mount\
+type=bind,source="$(pwd)"/data,target=/root/FourierTests/data \
 lvandenhaak/accelerate-euro-par-20
 ```
 And see if everything is working.
@@ -38,11 +39,12 @@ And see if everything is working.
 ## Step-by step instruction on how to reproduce the results
 **NOTE: If you want to shorten the experiments, read the [next](README.md#shortening-the-runs) section first. Otherwise the runs might take up to 3-5 hours.**
 The original experiments were conducted on a GeForce RTX 2080Ti (compute capability 7.0, 68 multiprocessors = 4352 cores at 1.65GHz, 11GB RAM) backed on by 16-core Threadripper 2950X (1.9GHz, 64GB RAM).
+
 1. Start the docker image
     ```bash
-sudo docker run --gpus all -it --privileged \
-  --mount type=bind,source="$(pwd)"/data,target=/root/FourierTests/data \
-  lvandenhaak/accelerate-euro-par-20
+sudo docker run --gpus all -it --privileged --mount\
+ type=bind,source="$(pwd)"/data,target=/root/FourierTests/data \
+ lvandenhaak/accelerate-euro-par-20
     ```
 1. To reproduce the quicksort results do (inside the docker bash)
     ```bash 
@@ -80,6 +82,7 @@ Add the option `--no-input` to not remake the input again.
 Unfortunately, processes that use the maximum ammount of memory of the GPU (or nearly so) can stall a long time. You can just cancel a specific benchmark with `[ctrl] + c`. It will give a warning that it isn't included in the .dat file, but it should still process fine.
 
 ## Structure of code
+
 * First of all, you can see the `Dockerfile` that was used to build the docker image you are using. It uses CUDA 10.1, LLVM 9, installs the code in the repository via stack, and get futhark version 0.13.2 from the futhark site. It also sets some environment variables.
 * [app/Main.hs](https://github.com/sakehl/FourierTests/blob/artifact/app/Main.hs) contains the benchmarks of the Accelerate versions. Basically, it just runs them 10 times, given the right arguments.
 * [src/Quicksort.hs](https://github.com/sakehl/FourierTests/blob/artifact/src/QuickSort.hs) contains the code used for quicksort (`quicksort`) in Accelerate. This is the normal non-nested version. In [src/QuickSortTest.hs](https://github.com/sakehl/FourierTests/blob/artifact/src/QuickSortTest.hs#L33) the nested version (works on list of 1d arrays) can be found, which is again called from Main.
@@ -88,6 +91,7 @@ Unfortunately, processes that use the maximum ammount of memory of the GPU (or n
 * [Futhark/quicksort.fut](https://github.com/sakehl/FourierTests/blob/artifact/Futhark/quicksort.fut) contains the Futhark quicksort version we are using, it is the same algorithm that Accelerate uses, actually we just ported the Accelerate version to Futhark.
 * [input_gen.py](https://github.com/sakehl/FourierTests/blob/artifact/input_gen.py) generates random intergers in lists, and outputs them to the data directory.
 * [make_fourier_dat.sh](https://github.com/sakehl/FourierTests/blob/artifact/make_fourier_dat.sh) is a bash script that does all the fourier experiments.
+
   * Both accelerate and futhark are profiled with nvprof. We use these options `--csv` (output as csv) `-f` (overwrite output files) `-u ms` (measure in ms) `--trace gpu` (only measure gpu activity) `--log-file data/result_fourier_$v\_$n.csv` (log file output) for Accelerate, for Futhark we add `--profile-child-processes` since it spawns child processes which do the actual compitations. Note this profiling is thus only profiling the executing times of the kernels and memory transfer overheads (`--gpu` option), as indicated in the paper, this is not the actual time the program is running, since there is idle time in between kernels. Also note, we don't measure the compile time, which is during runtime for Accelerate, but is not GPU activity.
   * Note that we use Futhark with `futhark bench -r 9`, this is actually executes the Futhark program 10 times, the bench option always does one warm-up run, that is profiled.
   * You can see that we add `--exclude=$n` to the futhark version, this was the easiest way to select a certain benchmark (see the tags in [Futhark/fft-lib.fut](https://github.com/sakehl/FourierTests/blob/artifact/Futhark/fft-lib.fut))
@@ -95,5 +99,6 @@ Unfortunately, processes that use the maximum ammount of memory of the GPU (or n
   * All the profiling is stored in files with names `data/result_fourier_$v\_$n.csv` where `$v` is the version and `$n` is the n value (which is plotted in the x-axis of the figures)
   * We call [process_csv.py](https://github.com/sakehl/FourierTests/blob/artifact/process_csv.py) which processes all the outputed csv files, into on `data/fourier32x32.dat`
   * We call gnuplot with [fourier32x32.gnuplot](https://github.com/sakehl/FourierTests/blob/artifact/process_csv.py) as argument, which produces the output file `data/fourier32x32.pdf`
+  
 * [make_quicksort_dat.sh](https://github.com/sakehl/FourierTests/blob/artifact/make_quicksort_dat.sh) does the same things, but for quicksort. Eventually it produces the files  `data/quicksort-100.pdf`, `data/quicksort-1000.pdf` and `data/quicksort-10000.pdf`
 * The accelerate compiler versions can be found in the file `stack.yaml`. And specifaclly [this](https://github.com/sakehl/accelerate/tree/feature/sequences) Accelerate version. The static analyses from section 3 of the paper can be found [here](https://github.com/sakehl/accelerate/blob/feature/sequences/Data/Array/Accelerate/Trafo/Shape.hs), the part that turns of the analyses can be found [here](https://github.com/sakehl/accelerate/blob/feature/sequences/Data/Array/Accelerate/Trafo/Vectorise.hs#L890). This is interacted on with the function `setforceIrreg :: IO ()`, which is used in [app/Main.hs](https://github.com/sakehl/FourierTests/blob/artifact/app/Main.hs#L41) on line 41.
