@@ -12,6 +12,7 @@ import qualified Control.Monad as P
 import Prelude as P (fromIntegral, fromInteger, fromRational, String, return, (>>=), (>>), IO, Maybe(..), maybe)
 
 import System.Environment
+import System.IO
 
 import FourierTest
 import QuickSortTest
@@ -30,6 +31,7 @@ import ReadFile
 -- Sum of 10 runs, so divide by 10
 main :: IO ()
 main = do
+    hSetBuffering stdout NoBuffering
     args <- getArgs
     if P.length args P.== 3 then do
         let algorithm = P.head args
@@ -64,7 +66,8 @@ mainQuicksort version m n =
 
         input <- readFiles m n
 
-        P.replicateM_ 10 (runTest qsort (readFiles m n))
+        P.putStr "Running Quicksort test: "
+        runTests 10 qsort (readFiles m n)
     else
         P.putStrLn $ "Quicksort version '" P.++ version P.++ "' doesn't exists."
 
@@ -81,13 +84,22 @@ mainFourier version n = do
             fourier `P.seq` return ()
             input <- readFilesFourier 32 n
             --
-            P.replicateM_ 10 (runTest fourier (readFilesFourier 32 n))
+            P.putStr "Running Fourier test: "
+            runTests 10 fourier (readFilesFourier 32 n)
+
+{-# NOINLINE runTests #-}
+runTests :: Int -> (a -> b) -> IO a -> IO ()
+runTests x f arg =
+    if x P.> 0 then do
+        P.putStr (P.show x P.++ " ")
+        runTest f arg
+        runTests (x P.- 1) f arg
+    else
+        P.putStr "\n"
 
 {-# NOINLINE runTest #-}
 runTest :: (a -> b) -> IO a -> IO ()
 runTest f arg = do
-    P.putStrLn "Running test"
     arg' <- arg
     f arg' `P.seq` return ()
-
 
