@@ -2,7 +2,7 @@
 
 
 nums_m=("100" "1000" "10000")
-nums_m_short=("100" "1000")
+nums_m_short=("100" "1000" "10000")
 nums_n=("1" "100" "1000" "2000" "5000" "10000")
 nums_n_short=("1" "100" "1000" "2000")
 versions=("Regular" "Irregular")
@@ -121,8 +121,8 @@ do
     do
 	    for n in "${nums_n[@]}"
         do
-            # Don't do irregular ones with n > 100 for short version, and for n> 1000 in general
-            if [ $short != "SET" -o $v != "Irregular" -o $n -le 100  ] && [ $v != "Irregular" -o $n -le 1000 ]; then
+            # Don't do irregular ones with n > 100 or m >1000 for short version, and for n> 1000 in general 
+            if [ $short != "SET" -o $v != "Irregular" -o $n -le 100 ] && [ $short != "SET" -o $v != "Irregular" -o $m -le 1000 ] && [ $v != "Irregular" -o $n -le 1000 ]; then
 		        accelerate $v $m $n
             fi
         done

@@ -33,7 +33,7 @@ sudo docker run --gpus all -it --privileged --mount type=bind,source="$(pwd)"/da
 And see if everything is working.
 
 ## Step-by step instruction on how to reproduce the results
-**NOTE: If you want to shorten the experiments, read the next section first. Otherwise the runs might take up to 3-5 hours.**
+**NOTE: If you want to shorten the experiments, read the [next](README.md#shortening-the-runs) section first. Otherwise the runs might take up to 3-5 hours.**
 The original experiments were conducted on a GeForce RTX 2080Ti (compute capability 7.0, 68 multiprocessors = 4352 cores at 1.65GHz, 11GB RAM) backed on by 16-core Threadripper 2950X (1.9GHz, 64GB RAM).
 1. Start the docker image
     ```bash

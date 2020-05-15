@@ -54,6 +54,9 @@ def make_dat_file(algo: str, m: Optional[int] = None):
             #Same for short runs for n >100 for irregular
             elif algo == "fourier" and v == "Irregular" and short and i > 100:
                 results[i][v] = "DNF"
+            #Same for short runs for m >1000 for irregular
+            elif algo == "fourier" and v == "Irregular" and short and m > 1000:
+                results[i][v] = "DNF"
             #Same for quicksort for n >1000 for irregular
             elif algo == "quicksort" and v == "Irregular" and (i > 1000 or (short and i > 100)) :
                 results[i][v] = "DNF"
