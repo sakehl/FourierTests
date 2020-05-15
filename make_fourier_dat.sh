@@ -1,6 +1,7 @@
 #!/bin/bash
 
 nums=("1" "100" "1000" "5000" "10000" "20000")
+numsshort=("1" "100" "1000")
 numsnormal=("1" "100" "1000")
 versions=("cuFFT" "Regular" "Irregular")
 
@@ -31,7 +32,7 @@ while :; do
     case $1 in
 		--no-input) noinput="SET"            
         ;;
-        -s|--short) nums=("1" "100" "1000" "5000")
+        -s|--short) nums="${numsshort[@]}"
 		;;
 		--futhark) onlyfuthark="SET"
 			versions=()
@@ -123,8 +124,6 @@ do
 	done
 done
 fi
-
-exit 0
 
 python3 process_csv.py fourier
 

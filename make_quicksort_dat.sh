@@ -2,7 +2,9 @@
 
 
 nums_m=("100" "1000" "10000")
+nums_m_short=("100")
 nums_n=("1" "100" "1000" "2000" "5000" "10000")
+nums_n_short=("1" "100" "1000")
 versions=("Regular" "Irregular")
 
 function accelerate {
@@ -37,8 +39,8 @@ while :; do
 		--no-input) noinput="SET"            
         ;;
         -s|--short)
-            nums_m=("100" "1000")
-            nums_n=("1" "100" "1000" "2000")
+            nums_m="${nums_m_short[@]}"
+            nums_n="${nums_n_short[@]}"
 		;;
         -f|--futhark) onlyfuthark="SET"
 		;;
