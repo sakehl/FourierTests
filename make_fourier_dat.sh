@@ -1,7 +1,7 @@
 #!/bin/bash
 
 nums=("1" "100" "1000" "5000" "10000" "20000")
-numsshort=("1" "100" "1000")
+numsnormal=("1" "100" "1000")
 versions=("cuFFT" "Regular" "Irregular")
 
 function accelerate {
@@ -31,7 +31,7 @@ while :; do
     case $1 in
 		--no-input) noinput="SET"            
         ;;
-        -s|--short) short="SET"
+        -s|--short) nums=("1" "100" "1000" "5000")
 		;;
 		--futhark) onlyfuthark="SET"
 			versions=()
@@ -65,19 +65,14 @@ while :; do
     shift
 done
 
-if [ $short = "SET" ]
-then
-nums=("1" "100" "1000" "5000")
-fi
-
 if [ $onlyn != "UNSET" ]
 then
 nums=($onlyn)
 	if [ $onlyn -gt 1000 ]
 	then
-		numsshort=()
+		numsnormal=()
 	else
-		numsshort=($onlyn)
+		numsnormal=($onlyn)
 	fi
 fi
 
@@ -108,7 +103,7 @@ if [ $onlyfuthark = "UNSET" ] && ([ $accelerateversion = "UNSET" ] || [ $acceler
 then
 for v in "Normal"
 do
-	for n in "${numsshort[@]}"
+	for n in "${numsnormal[@]}"
 	do
 		accelerate $v $n
 	done

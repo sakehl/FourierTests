@@ -14,10 +14,10 @@ if len(sys.argv) <= 3:
     with open('data/list_{}_{}.in'.format(str(m),str(n)), 'w') as f:
         print(rands, file=f)
 
-    out = list(map(sorted, rands))
+    # out = list(map(sorted, rands))
 
-    with open('data/list_{}_{}.out'.format(str(m),str(n)), 'w') as f:
-        print(out, file=f)
+    # with open('data/list_{}_{}.out'.format(str(m),str(n)), 'w') as f:
+    #     print(out, file=f)
 else:
     l = int(sys.argv[1])
     m = int(sys.argv[2])
@@ -27,7 +27,7 @@ else:
     with open('data/list_{}_{}_{}.in'.format(str(l),str(m),str(n)), 'w') as f:
         print(rands, file=f)
 
-    out = list(map(sorted, rands))
+    # out = list(map(sorted, rands))
 
-    with open('data/list_{}_{}_{}.out'.format(str(l),str(m),str(n)), 'w') as f:
-        print(out, file=f)
+    # with open('data/list_{}_{}_{}.out'.format(str(l),str(m),str(n)), 'w') as f:
+    #     print(out, file=f)
