@@ -32,7 +32,7 @@ while :; do
     case $1 in
 		--no-input) noinput="SET"            
         ;;
-        -s|--short) nums="${numsshort[@]}"
+        -s|--short) nums=("${numsshort[@]}")
 		;;
 		--futhark) onlyfuthark="SET"
 			versions=()

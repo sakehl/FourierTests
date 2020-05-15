@@ -39,8 +39,8 @@ while :; do
 		--no-input) noinput="SET"            
         ;;
         -s|--short)
-            nums_m="${nums_m_short[@]}"
-            nums_n="${nums_n_short[@]}"
+            nums_m=("${nums_m_short[@]}")
+            nums_n=("${nums_n_short[@]}")
 		;;
         -f|--futhark) onlyfuthark="SET"
 		;;
