@@ -6,6 +6,9 @@ import sys
 from typing import Optional
 
 ns = {"fourier": [1, 100, 1000, 5000, 10000, 20000], "quicksort" : [1, 100, 1000, 2000, 5000, 10000]}
+
+ns_short = {"fourier": [1, 100, 1000, 5000], "quicksort" : [1, 100, 1000, 2000]}
+
 #ns = [1,100]
 versions = {"fourier": ["Regular", "cuFFT", "Irregular", "Normal", "Futhark"], "quicksort": ["Futhark", "Regular", "Irregular"]}
 
@@ -48,6 +51,12 @@ def make_dat_file(algo: str, m: Optional[int] = None):
             # We don't run normal above 1000, since it will take to long
             if algo == "fourier" and v == "Normal" and i > 1000:
                 results[i][v] = "DNF"
+            #Same for short runs for n >100 for irregular
+            elif algo == "fourier" and v == "Irregular" and short and i > 100:
+                results[i][v] = "DNF"
+            #Same for quicksort for n >1000 for irregular
+            elif algo == "quicksort" and v == "Irregular" and (i > 1000 or (short and i > 100)) :
+                results[i][v] = "DNF"
             else:
                 t = process_time(algo,v, m, i)
                 # Each experiment is ran exactly 10 times, so we take the average of 10 runs
@@ -74,10 +83,20 @@ def make_dat_file(algo: str, m: Optional[int] = None):
             f.write("\n")
 
 
+short = False
 algorithm = sys.argv[1]
+
 if algorithm == "fourier":
+    if len(sys.argv) > 2:
+        if sys.argv[2] == "short":
+            ns=ns_short
+            short=True
     make_dat_file(algorithm)
 elif algorithm == "quicksort":
+    if len(sys.argv) > 3:
+        if sys.argv[3] == "short":
+            ns=ns_short
+            short=True
     m = int(sys.argv[2])
     make_dat_file(algorithm, m)
 else:

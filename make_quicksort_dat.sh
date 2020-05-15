@@ -2,9 +2,9 @@
 
 
 nums_m=("100" "1000" "10000")
-nums_m_short=("100")
+nums_m_short=("100" "1000")
 nums_n=("1" "100" "1000" "2000" "5000" "10000")
-nums_n_short=("1" "100" "1000")
+nums_n_short=("1" "100" "1000" "2000")
 versions=("Regular" "Irregular")
 
 function accelerate {
@@ -34,11 +34,12 @@ onlyn="UNSET"
 onlym="UNSET"
 onlyfuthark="UNSET"
 accelerateversion="UNSET"
+short="UNSET"
 while :; do
     case $1 in
 		--no-input) noinput="SET"            
         ;;
-        -s|--short)
+        -s|--short) short="SET"
             nums_m=("${nums_m_short[@]}")
             nums_n=("${nums_n_short[@]}")
 		;;
@@ -92,8 +93,25 @@ do
 done
 fi
 
-
 ################################################# Actual tests
+if [ $accelerateversion = "UNSET" ]
+then
+echo "Running Futhark benchmarks"
+echo "Futhark says it does 9 runs, but actually it does one warmup run extra, which we do measure with nvprof"
+futhark cuda Futhark/quicksort.fut
+for m in "${nums_m[@]}"
+    do
+        for v in "Futhark"
+        do
+            
+            for n in "${nums_n[@]}"
+            do
+                futharkbench $v $m $n
+            done
+        done
+    done
+fi
+
 
 if [ $onlyfuthark = "UNSET" ]
 then
@@ -103,32 +121,21 @@ do
     do
 	    for n in "${nums_n[@]}"
         do
-		    accelerate $v $m $n
+            # Don't do irregular ones with n > 100 for short version, and for n> 1000 in general
+            if [ $short != "SET" -o $v != "Irregular" -o $n -le 100  ] && [ $v != "Irregular" -o $n -le 1000 ]; then
+		        accelerate $v $m $n
+            fi
         done
 	done
 done
 fi
 
-if [ $accelerateversion = "UNSET" ]
-then
-echo "Running Futhark benchmarks"
-echo "Futhark says it does 9 runs, but actually it does one warmup run extra, which we do measure with nvprof"
-futhark cuda Futhark/quicksort.fut
 for m in "${nums_m[@]}"
 do
-    for v in "Futhark"
-    do
-	    
-	    for n in "${nums_n[@]}"
-	    do
-		    futharkbench $v $m $n
-	    done
-    done
-done
-fi
-
-for m in "${nums_m[@]}"
-do
-    python3 process_csv.py quicksort $m
+    if [ $short != "SET" ]; then
+        python3 process_csv.py quicksort $m
+    else
+        python3 process_csv.py quicksort $m short
+    fi
     gnuplot quicksort-$m.gnuplot
 done
