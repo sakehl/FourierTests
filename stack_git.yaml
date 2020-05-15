@@ -35,7 +35,7 @@ extra-deps:
 
 
 - git:    https://github.com/sakehl/accelerate-fft.git
-  commit: 2f1a5d1201b0ac565b869810b82f0884fb2312fe
+  commit: bc3de13021afd70ac9dd118ff2833189181037da
 # - accelerate-fft-1.1.0.0
 
 # - git: https://github.com/sakehl/llvm-hs.git
