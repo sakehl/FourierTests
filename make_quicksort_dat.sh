@@ -2,9 +2,7 @@
 
 
 nums_m=("100" "1000" "10000")
-#nums_m=("100")
 nums_n=("1" "100" "1000" "2000" "5000" "10000")
-#nums_n=("1")
 
 
 function accelerate {
@@ -29,6 +27,63 @@ function futharkbench {
     rm $filename
 }
 
+noinput="UNSET"
+short="UNSET"
+onlyn="UNSET"
+onlym="UNSET"
+while :; do
+    case $1 in
+		--no-input) noinput="SET"            
+        ;;
+        -s|--short) short="SET"
+		;;
+        -n|--n)
+            if [ "$2" ]; then
+                onlyn=$2
+                shift
+                re='^[0-9]+$'
+				if ! [[ $onlyn =~ $re ]] ; then
+				echo "error: $onlyn is Not a number" >&2; exit 1
+				fi
+            else
+                die 'ERROR: "-n" requires a non-empty option argument.'
+            fi
+        ;;
+        -m|--m)
+            if [ "$2" ]; then
+                onlym=$2
+                shift
+                re='^[0-9]+$'
+				if ! [[ $onlym =~ $re ]] ; then
+				echo "error: $onlym is Not a number" >&2; exit 1
+				fi
+            else
+                die 'ERROR: "-m" requires a non-empty option argument.'
+            fi
+        ;;
+        *) break
+    esac
+    shift
+done
+
+if [ $short = "SET" ]
+then
+nums_m=("100" "1000")
+nums_n=("1" "100" "1000" "2000")
+fi
+
+if [ $onlyn != "UNSET" ]
+then
+nums_n=($onlyn)
+fi
+
+if [ $onlym != "UNSET" ]
+then
+nums_m=($m)
+fi
+
+if [ $noinput != "SET" ]
+then
 echo "Making the input data"
 for m in "${nums_m[@]}"
 do
@@ -38,6 +93,7 @@ do
 	    python3 input_gen.py $m $n
     done
 done
+fi
 
 for m in "${nums_m[@]}"
 do

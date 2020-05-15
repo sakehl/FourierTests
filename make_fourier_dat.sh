@@ -21,12 +21,51 @@ function futharkbench {
     rm $filename
 }
 
+noinput="UNSET"
+short="UNSET"
+onlyn="UNSET"
+while :; do
+    case $1 in
+		--no-input) noinput="SET"            
+        ;;
+        -s|--short) short="SET"
+		;;
+		-n|--n)
+            if [ "$2" ]; then
+                onlyn=$2
+                shift
+				re='^[0-9]+$'
+				if ! [[ $onlyn =~ $re ]] ; then
+				echo "error: $onlyn is Not a number" >&2; exit 1
+				fi
+            else
+                die 'ERROR: "-n" requires a non-empty option argument.'
+            fi
+        ;;
+        *) break
+    esac
+    shift
+done
+
+if [ $short = "SET" ]
+then
+nums=("1" "100" "1000" "5000")
+fi
+
+if [ $onlyn != "UNSET" ]
+then
+nums=($onlyn)
+fi
+
+if [ $noinput != "SET" ]
+then
 echo "Making the input data"
 for n in "${nums[@]}"
 do
     echo "n=$n"
 	python3 input_gen.py 32 32 $n
 done
+fi
 
 for v in "cuFFT" "Regular" "Irregular"
 do
