@@ -63,10 +63,13 @@ To run a specific benchmark again, you can give some other arguments, e.g.
 ```bash
 ./make_quicksort_dat.sh --regular -m 100 -n 1
 ./make_fourier_dat.sh --futhark -n 1
+./make_fourier_dat.sh --irregular --no-input
 ```
 For quicksort, valid values for m are 100, 1000 and 1000 (the three differunt subgraphs). Valid values for n are 1, 100, 1000, 2000, 5000, 10000. Valid versions (as indicated by the legend of Figure 3) are --regular (Accelerate, Regular) --irregular (Accelerate), --futhark (Futhark).
 
 For fourier, valid values for n are 1, 100, 1000, 5000, 10000, 20000. Valid versions (as indicated by the legend of Figure 3) are --regular (Accelerate, Regular) --irregular (Accelerate), --futhark (Futhark), --cufft (cuFFT) and --normal (Normal).
+
+Add the option `--no-input` to not remake the input again.
 
 ### Out of memory problems
 Unfortunately, processes that use the maximum ammount of memory of the GPU (or nearly so) can stall a long time. You can just cancel a specific benchmark with `[ctrl] + c`. It will give a warning that it isn't included in the .dat file, but it should still process fine.
