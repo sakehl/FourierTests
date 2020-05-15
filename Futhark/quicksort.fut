@@ -77,7 +77,7 @@
 -- Quicksort test 10000 1
 -- ==
 -- entry: main
--- tags n100 n1000 n2000 n5000 n10000 m100 m10000
+-- tags n100 n1000 n2000 n5000 n10000 m100 m1000
 -- input  @ ../data/list_10000_1.in
 
 -- Quicksort test 10000 100
