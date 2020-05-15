@@ -3,7 +3,8 @@ This is the source code we used to do the experiments of Section 5 (Evaluation).
 The repository can be found [here](https://github.com/sakehl/FourierTests/tree/artifact)
 it can be cloned with
 ```bash
-git clone --single-branch -b artifact https://github.com/sakehl/FourierTests.git
+git clone --single-branch -b artifact \
+ https://github.com/sakehl/FourierTests.git
 ```
 **NOTE You do not have to clone this repository for running everything, it is also included in the docker image. But if you want to inspect the code we use, this repo is more usefull than a docker image.**
 
@@ -28,7 +29,9 @@ mkdir data
 ```
 Now do the following
 ```bash
-sudo docker run --gpus all -it --privileged --mount type=bind,source="$(pwd)"/data,target=/root/FourierTests/data lvandenhaak/accelerate-euro-par-20
+sudo docker run --gpus all -it --privileged \
+--mount type=bind,source="$(pwd)"/data,target=/root/FourierTests/data \
+lvandenhaak/accelerate-euro-par-20
 ```
 And see if everything is working.
 
@@ -37,14 +40,16 @@ And see if everything is working.
 The original experiments were conducted on a GeForce RTX 2080Ti (compute capability 7.0, 68 multiprocessors = 4352 cores at 1.65GHz, 11GB RAM) backed on by 16-core Threadripper 2950X (1.9GHz, 64GB RAM).
 1. Start the docker image
     ```bash
-    sudo docker run --gpus all -it --privileged --mount type=bind,source="$(pwd)"/data,target=/root/FourierTests/data lvandenhaak/accelerate-euro-par-20
+sudo docker run --gpus all -it --privileged \
+  --mount type=bind,source="$(pwd)"/data,target=/root/FourierTests/data \
+  lvandenhaak/accelerate-euro-par-20
     ```
 1. To reproduce the quicksort results do (inside the docker bash)
     ```bash 
     ./make_quicksort_dat.sh
     ```
     **Note this can take up a long time, on our machine about 2 to 3 hours. Mostly busy compiling Accelerate's Irregular version.**
-1. Inspect the results in the data folder on your host. `quicksort-100.pdf`, `quicksort-1000.pdf` and `quicksort-10000.pdf` should be created and look similar to figure 3 of the paper. The files `quicksort-100.dat` contain the raw data points. The files `result_quicksort_Regular_100_1.csv` contain the output we get from the nvidia profiler (nvprof)
+1. Inspect the results in the data folder on your host. `quicksort-100.pdf`, `quicksort-1000.pdf` and `quicksort-10000.pdf` should be created and look similar to figure 3 of the paper. The files `quicksort-100.dat` contain the raw data points. The files `result_quicksort_Regular_100_1.csv` contain the output we get from the nvidia profiler (nvprof). They can be compared with the exact paper results, which can be found in [ResultsPaper](https://github.com/sakehl/FourierTests/tree/artifact/ResultsPaper).
 1. To reproduce the fourier results do (inside the docker bash)
     ```bash 
     ./make_fourier_dat.sh
