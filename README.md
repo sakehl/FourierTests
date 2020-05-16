@@ -30,7 +30,7 @@ mkdir data
 ```
 Now do the following
 ```bash
-sudo docker run --gpus all -it --privileged --mount\
+sudo docker run --gpus all -it --privileged --mount \
 type=bind,source="$(pwd)"/data,target=/root/FourierTests/data \
 lvandenhaak/accelerate-euro-par-20
 ```
