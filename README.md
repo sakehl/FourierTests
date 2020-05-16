@@ -41,11 +41,11 @@ And see if everything is working.
 The original experiments were conducted on a GeForce RTX 2080Ti (compute capability 7.0, 68 multiprocessors = 4352 cores at 1.65GHz, 11GB RAM) backed on by 16-core Threadripper 2950X (1.9GHz, 64GB RAM).
 
 1. Start the docker image
-    ```bash
-sudo docker run --gpus all -it --privileged --mount\
- type=bind,source="$(pwd)"/data,target=/root/FourierTests/data \
- lvandenhaak/accelerate-euro-par-20
-    ```
+  ```bash
+  sudo docker run --gpus all -it --privileged --mount \
+  type=bind,source="$(pwd)"/data,target=/root/FourierTests/data \
+  lvandenhaak/accelerate-euro-par-20
+  ```
 1. To reproduce the quicksort results do (inside the docker bash)
     ```bash 
     ./make_quicksort_dat.sh
